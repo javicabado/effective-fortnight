@@ -9,6 +9,9 @@ CORS(app)
 UPLOAD_FOLDER = "uploads"
 EXCEL_PATH = "resultados.xlsx"
 
+# Crea la carpeta uploads si no existe
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 # Sirve el HTML principal
 @app.route("/")
 def inicio():
@@ -59,3 +62,4 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
 
     app.run(host="0.0.0.0", port=port)
+
