@@ -3,7 +3,7 @@ from flask_cors import CORS
 import os
 from extractor import extraer_datos_factura, guardar_en_excel
 
-app = Flask(__name__, static_folder="../frontend")
+app = Flask(__name__, static_folder=".")
 CORS(app)
 
 UPLOAD_FOLDER = "uploads"
@@ -12,7 +12,7 @@ EXCEL_PATH = "resultados.xlsx"
 # Sirve el HTML principal
 @app.route("/")
 def inicio():
-    return send_from_directory("../frontend", "index.html")
+    return send_from_directory(".", "index.html")
 
 @app.route("/procesar", methods=["POST"])
 def procesar_facturas():
@@ -57,4 +57,5 @@ def descargar_excel():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+
     app.run(host="0.0.0.0", port=port)
