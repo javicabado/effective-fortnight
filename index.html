@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FacturaAI — Extractor de Facturas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      min-height: 100vh;
+      color: #e2e8f0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo { font-size: 20px; font-weight: 800; color: #34d399; letter-spacing: -0.5px; }
+    .logo span { color: #fff; }
+    .badge {
+      background: #064e3b;
+      color: #34d399;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid #34d399;
+    }
+
+    /* ── LAYOUT ── */
+    .contenedor {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+    }
+
+    @media (max-width: 700px) {
+      .contenedor { grid-template-columns: 1fr; }
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 28px;
+    }
+
+    .panel-titulo {
+      font-size: 13px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+
+    /* ── ZONA SUBIDA ── */
+    .zona-subida {
+      border: 2px dashed #334155;
+      border-radius: 12px;
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #0f172a;
+    }
+
+    .zona-subida:hover, .zona-subida.activa {
+      border-color: #34d399;
+      background: #064e3b22;
+    }
+
+    .zona-subida .icono { font-size: 36px; margin-bottom: 12px; }
+    .zona-subida strong { font-size: 15px; color: #e2e8f0; }
+    .zona-subida p { font-size: 13px; color: #64748b; margin-top: 6px; }
+    input[type="file"] { display: none; }
+
+    .lista-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      background: #064e3b;
+      border: 1px solid #34d399;
+      color: #34d399;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ── BOTÓN ── */
+    .boton {
+      width: 100%;
+      padding: 13px;
+      margin-top: 18px;
+      background: #34d399;
+      color: #0f172a;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .boton:hover { background: #6ee7b7; }
+    .boton:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+    .estado {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    /* ── RESULTADOS ── */
+    .tarjeta-resultado {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .nombre-archivo {
+      font-size: 12px;
+      font-weight: 700;
+      color: #34d399;
+      margin-bottom: 10px;
+    }
+
+    .fila-dato {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #1e293b;
+      font-size: 13px;
+    }
+
+    .fila-dato:last-child { border-bottom: none; }
+    .etiqueta { color: #94a3b8; }
+    .valor { font-weight: 700; color: #f1f5f9; }
+
+    .boton-excel {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin-top: 16px;
+      background: #064e3b;
+      color: #34d399;
+      border: 1px solid #34d399;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .boton-excel:hover { background: #34d399; color: #0f172a; }
+
+    /* ── HISTORIAL ── */
+    .historial-vacio {
+      text-align: center;
+      color: #475569;
+      font-size: 13px;
+      padding: 30px 0;
+    }
+
+    .fila-historial {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 8px;
+      padding: 10px 8px;
+      border-bottom: 1px solid #1e293b;
+      font-size: 12px;
+      align-items: center;
+    }
+
+    .fila-historial:last-child { border-bottom: none; }
+
+    .fila-historial.cabecera {
+      color: #64748b;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .fila-historial.dato { color: #cbd5e1; }
+    .fila-historial.dato:hover { background: #0f172a; border-radius: 6px; }
+
+    .cif-badge {
+      background: #1e3a5f;
+      color: #93c5fd;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .btn-limpiar {
+      background: none;
+      border: 1px solid #334155;
+      color: #64748b;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      float: right;
+      transition: all 0.2s;
+    }
+
+    .btn-limpiar:hover { border-color: #ef4444; color: #ef4444; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Factura<span>AI</span></div>
+  <div class="badge">✦ Beta</div>
+</header>
+
+<div class="contenedor">
+
+  <!-- COLUMNA IZQUIERDA: subida + resultados -->
+  <div>
+    <div class="panel">
+      <div class="panel-titulo">📤 Subir facturas</div>
+
+      <div class="zona-subida" id="zonaSubida">
+        <div class="icono">📂</div>
+        <strong>Arrastra tus facturas aquí</strong>
+        <p>PDF, JPG o PNG · varios archivos a la vez</p>
+        <input type="file" id="inputArchivo" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple/>
+      </div>
+
+      <div class="lista-chips" id="listaChips"></div>
+      <button class="boton" id="botonExtraer" disabled>⚡ Extraer datos</button>
+      <div class="estado" id="estado"></div>
+    </div>
+
+    <div class="panel" id="panelResultados" style="margin-top:24px; display:none">
+      <div class="panel-titulo">✅ Resultados</div>
+      <div id="contenidoResultados"></div>
+      <a class="boton-excel" href="/descargar">
+        ⬇️ Descargar Excel completo
+      </a>
+    </div>
+  </div>
+
+  <!-- COLUMNA DERECHA: historial -->
+  <div>
+    <div class="panel">
+      <div class="panel-titulo">
+        🕓 Historial de sesión
+        <button class="btn-limpiar" id="btnLimpiar">Limpiar</button>
+      </div>
+      <div id="historial">
+        <div class="historial-vacio" id="historialVacio">
+          Aún no has procesado ninguna factura
+        </div>
+        <div id="filasHistorial"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const zona        = document.getElementById("zonaSubida");
+  const input       = document.getElementById("inputArchivo");
+  const boton       = document.getElementById("botonExtraer");
+  const estado      = document.getElementById("estado");
+  const chips       = document.getElementById("listaChips");
+  const panelRes    = document.getElementById("panelResultados");
+  const contenido   = document.getElementById("contenidoResultados");
+  const filasHist   = document.getElementById("filasHistorial");
+  const histVacio   = document.getElementById("historialVacio");
+  const btnLimpiar  = document.getElementById("btnLimpiar");
+
+  let historial = [];
+
+  zona.addEventListener("click", () => input.click());
+
+  function mostrarChips(archivos) {
+    chips.innerHTML = "";
+    Array.from(archivos).forEach(f => {
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = "📎 " + f.name;
+      chips.appendChild(c);
+    });
+    boton.disabled = archivos.length === 0;
+  }
+
+  input.addEventListener("change", () => mostrarChips(input.files));
+
+  zona.addEventListener("dragover", e => { e.preventDefault(); zona.classList.add("activa"); });
+  zona.addEventListener("dragleave", () => zona.classList.remove("activa"));
+  zona.addEventListener("drop", e => {
+    e.preventDefault();
+    zona.classList.remove("activa");
+    input.files = e.dataTransfer.files;
+    mostrarChips(input.files);
+  });
+
+  function actualizarHistorial() {
+    if (historial.length === 0) {
+      histVacio.style.display = "block";
+      filasHist.innerHTML = "";
+      return;
+    }
+
+    histVacio.style.display = "none";
+    filasHist.innerHTML = `
+      <div class="fila-historial cabecera">
+        <span>Archivo</span><span>Base Imp.</span><span>IVA</span><span>Total</span>
+      </div>
+    `;
+
+    historial.slice().reverse().forEach(item => {
+      const fila = document.createElement("div");
+      fila.className = "fila-historial dato";
+      fila.innerHTML = `
+        <span><span class="cif-badge">${item.CIF}</span></span>
+        <span>${item["Base Imponible"]}</span>
+        <span>${item.IVA}</span>
+        <span>${item.Total}</span>
+      `;
+      filasHist.appendChild(fila);
+    });
+  }
+
+  btnLimpiar.addEventListener("click", () => {
+    historial = [];
+    actualizarHistorial();
+    panelRes.style.display = "none";
+  });
+
+  boton.addEventListener("click", async () => {
+    const archivos = input.files;
+    if (!archivos.length) return;
+
+    boton.disabled = true;
+    estado.textContent = `⏳ Procesando ${archivos.length} archivo(s)...`;
+    panelRes.style.display = "none";
+    contenido.innerHTML = "";
+
+    const formData = new FormData();
+    Array.from(archivos).forEach(f => formData.append("archivos", f));
+
+    try {
+     const respuesta = await fetch("/procesar", {
+        method: "POST",
+        body: formData
+      });
+
+      const json = await respuesta.json();
+
+      json.resultados.forEach(item => {
+        const bloque = document.createElement("div");
+        bloque.className = "tarjeta-resultado";
+
+        if (item.error) {
+          bloque.innerHTML = `
+            <div class="nombre-archivo">⚠️ ${item.archivo}</div>
+            <div style="color:#f87171;font-size:13px">${item.error}</div>`;
+        } else {
+          const d = item.datos;
+          bloque.innerHTML = `
+            <div class="nombre-archivo">📄 ${item.archivo}</div>
+            <div class="fila-dato"><span class="etiqueta">CIF</span><span class="valor">${d.CIF}</span></div>
+            <div class="fila-dato"><span class="etiqueta">Base Imponible</span><span class="valor">${d["Base Imponible"]}</span></div>
+            <div class="fila-dato"><span class="etiqueta">IVA</span><span class="valor">${d.IVA}</span></div>
+            <div class="fila-dato"><span class="etiqueta">Total</span><span class="valor">${d.Total}</span></div>`;
+
+          historial.push(d);
+        }
+        contenido.appendChild(bloque);
+      });
+
+      actualizarHistorial();
+      panelRes.style.display = "block";
+      estado.textContent = "";
+
+    } catch (error) {
+      estado.textContent = "❌ Error al conectar con el servidor. ¿Está app.py en marcha?";
+    }
+
+    boton.disabled = false;
+  });
+</script>
+</body>
+</html>
