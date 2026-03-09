@@ -43,6 +43,10 @@ def inicio():
         return send_from_directory(".", "landing.html")
     return send_from_directory(".", "index.html")
 
+@app.route("/app")
+def app_principal():
+    return send_from_directory(".", "index.html")
+
 
 # ── REGISTRO ──────────────────────────────────────────
 @app.route("/registro", methods=["GET", "POST"])
