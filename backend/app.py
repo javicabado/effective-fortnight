@@ -4,10 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import stripe
-stripe.api_key = "sk_test_51T8cPP9TXgXDc5x0j3LLniuUSTRD6LHTqXEKlBNqh8b4DL79ZEUzOta08fJsd8Kyr0PTkKAi9jSMXmph7By2Lmxd00LtowwKDs"
-
-STRIPE_PRICE_ID = "price_1T8cfn9TXgXDc5x00xrPVwHf"
-STRIPE_PK = "pk_test_51T8cPP9TXgXDc5x0P5SgJF8f9PyZaXiMpfAwBqNrqMmoZTF0Fl7lpddChlqODBc6FlMhsuXDGn3twaQUtG9GL6KE00DSkRtZxy"
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
+STRIPE_PK = os.environ.get("STRIPE_PK", "")
 from extractor import extraer_datos_factura, guardar_en_excel
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
