@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FacturaAI — Extractor de Facturas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      min-height: 100vh;
+      color: #e2e8f0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo { font-size: 20px; font-weight: 800; color: #34d399; letter-spacing: -0.5px; }
+    .logo span { color: #fff; }
+    .badge {
+      background: #064e3b;
+      color: #34d399;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid #34d399;
+    }
+
+    /* ── LAYOUT ── */
+    .contenedor {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+    }
+
+    @media (max-width: 700px) {
+      .contenedor { grid-template-columns: 1fr; }
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 28px;
+    }
+
+    .panel-titulo {
+      font-size: 13px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+
+    /* ── ZONA SUBIDA ── */
+    .zona-subida {
+      border: 2px dashed #334155;
+      border-radius: 12px;
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #0f172a;
+    }
+
+    .zona-subida:hover, .zona-subida.activa {
+      border-color: #34d399;
+      background: #064e3b22;
+    }
+
+    .zona-subida .icono { font-size: 36px; margin-bottom: 12px; }
+    .zona-subida strong { font-size: 15px; color: #e2e8f0; }
+    .zona-subida p { font-size: 13px; color: #64748b; margin-top: 6px; }
+    input[type="file"] { display: none; }
+
+    .lista-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      background: #064e3b;
+      border: 1px solid #34d399;
+      color: #34d399;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ── BOTÓN ── */
+    .boton {
+      width: 100%;
+      padding: 13px;
+      margin-top: 18px;
+      background: #34d399;
+      color: #0f172a;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .boton:hover { background: #6ee7b7; }
+    .boton:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+    .estado {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    /* ── RESULTADOS ── */
+    .tarjeta-resultado {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .nombre-archivo {
+      font-size: 12px;
+      font-weight: 700;
+      color: #34d399;
+      margin-bottom: 10px;
+    }
+
+    .fila-dato {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #1e293b;
+      font-size: 13px;
+    }
+
+    .fila-dato:last-child { border-bottom: none; }
+    .etiqueta { color: #94a3b8; }
+    .valor { font-weight: 700; color: #f1f5f9; }
+
+    .boton-excel {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin-top: 16px;
+      background: #064e3b;
+      color: #34d399;
+      border: 1px solid #34d399;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .boton-excel:hover { background: #34d399; color: #0f172a; }
+
+    /* ── HISTORIAL ── */
+    .historial-vacio {
+      text-align: center;
+      color: #475569;
+      font-size: 13px;
+      padding: 30px 0;
+    }
+
+    .fila-historial {
+      display: grid;
+      grid-template-columns: 1.5fr 0.8fr 0.8fr 1fr 0.8fr 1fr;
+      gap: 8px;
+      padding: 10px 8px;
+      border-bottom: 1px solid #1e293b;
+      font-size: 12px;
+      align-items: center;
+    }
+
+    .fila-historial:last-child { border-bottom: none; }
+
+    .fila-historial.cabecera {
+      color: #64748b;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .fila-historial.dato { color: #cbd5e1; }
+    .fila-historial.dato:hover { background: #0f172a; border-radius: 6px; }
+
+    .cif-badge {
+      background: #1e3a5f;
+      color: #93c5fd;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .btn-limpiar {
+      background: none;
+      border: 1px solid #334155;
+      color: #64748b;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      float: right;
+      transition: all 0.2s;
+    }
+
+    .btn-limpiar:hover { border-color: #ef4444; color: #ef4444; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Factura<span>AI</span></div>
+  <div style="display:flex; align-items:center; gap:20px; margin-right:8px;">
+  <div id="contadorFacturas" style="display:flex; align-items:center; gap:10px;">
+  <div style="text-align:right;">
+    <div id="textoContador" style="font-size:12px; color:#94a3b8; white-space:nowrap;"></div>
+    <div style="width:200px; height:8px; background:#334155; border-radius:4px; margin-top:4px;">
+      <div id="barraProgreso" style="height:8px; border-radius:4px; background:#34d399; width:0%; transition:width 0.4s;"></div>
+    </div>
+  </div>
+</div>
+  <div class="badge">✦ Beta</div>
+<button id="btnPremium" onclick="abrirModal()"  style="background:linear-gradient(135deg, #34d399, #059669); color:#0f172a; border:none; border-radius:20px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer; display:none; box-shadow: 0 0 12px rgba(52,211,153,0.4);">⚡ Hazte Premium · 5€/mes</button>
+  <a href="/logout" style="font-size:13px; color:#64748b; text-decoration:none;">Cerrar sesión</a>
+</div>
+</header>
+
+<div class="contenedor" style="display:block;">
+
+  <!-- PESTAÑAS -->
+  <div style="display:flex; gap:8px; margin-bottom:24px;">
+    <button id="tabFacturas" onclick="cambiarTab('facturas')" style="padding:12px 28px; border-radius:10px; border:2px solid #34d399; background:#1e293b; color:#34d399; font-weight:700; font-size:14px; cursor:pointer; box-shadow: 0 0 12px rgba(52,211,153,0.3);">
+  📄 Subir facturas
+</button>
+<button id="tabExcel" onclick="cambiarTab('excel')" style="padding:12px 28px; border-radius:10px; border:2px solid #334155; background:#0f172a; color:#64748b; font-weight:700; font-size:14px; cursor:pointer;">
+  📊 Mi Excel
+</button>
+  </div>
+
+  <!-- PESTAÑA 1: SUBIR FACTURAS -->
+  <div id="panelFacturas" style="display:grid; grid-template-columns:1fr 1fr; gap:28px;">
+    <div>
+      <div class="panel">
+        <div class="panel-titulo">📤 Subir facturas</div>
+        <div class="zona-subida" id="zonaSubida">
+          <div class="icono">📂</div>
+          <strong>Arrastra tus facturas aquí</strong>
+          <p>PDF · varios archivos a la vez</p>
+          <input type="file" id="inputArchivo" accept=".pdf,.jpg,.jpeg,.png,.webp,.tiff,.tif,.bmp,.heic,.heif" multiple/>
+        </div>
+        <div class="lista-chips" id="listaChips"></div>
+        <button class="boton" id="botonExtraer" disabled>⚡ Extraer datos</button>
+        <div class="estado" id="estado"></div>
+      </div>
+      <div class="panel" id="panelResultados" style="margin-top:24px; display:none">
+        <div class="panel-titulo">✅ Resultados</div>
+        <div id="contenidoResultados"></div>
+        <a class="boton-excel" href="/descargar">⬇️ Descargar Excel completo</a>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="panel-titulo">🕓 Historial de sesión
+          <button class="btn-limpiar" id="btnLimpiar">Limpiar</button>
+        </div>
+        <div id="historial">
+          <div class="historial-vacio" id="historialVacio">Aún no has procesado ninguna factura</div>
+          <div id="filasHistorial"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PESTAÑA 2: EDITOR EXCEL -->
+  <div id="panelExcel" style="display:none;">
+    <div class="panel">
+      <div class="panel-titulo">📊 Editor de Excel</div>
+      <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
+        <div>
+          <div style="font-size:12px; color:#64748b; margin-bottom:6px;">Sube tu Excel o usa el generado automáticamente</div>
+<input type="file" id="inputExcelEditor" accept=".xlsx" style="display:none;" onchange="cargarExcel()"/>        </div>
+        <div style="display:flex; align-items:flex-end; gap:8px; flex-wrap:wrap;">
+          <input type="file" id="inputExcelEditor" accept=".xlsx" style="display:none;" onchange="cargarExcel()"/>
+<button onclick="document.getElementById('inputExcelEditor').click()" style="padding:8px 16px; background:#334155; color:#e2e8f0; border:none; border-radius:8px; cursor:pointer; font-size:13px;">📂 Cargar Excel</button>
+          <button onclick="añadirFila()" style="padding:8px 16px; background:#064e3b; color:#34d399; border:1px solid #34d399; border-radius:8px; cursor:pointer; font-size:13px;">+ Añadir fila</button>
+          <button onclick="añadirColumna()" style="padding:8px 16px; background:#1e3a5f; color:#93c5fd; border:1px solid #93c5fd; border-radius:8px; cursor:pointer; font-size:13px;">+ Añadir columna</button>
+          <button onclick="guardarExcel()" style="padding:8px 16px; background:#34d399; color:#0f172a; border:none; border-radius:8px; cursor:pointer; font-size:13px; font-weight:700;">⬇️ Guardar y descargar</button>
+        </div>
+      </div>
+      <div id="tablaEditorContainer" style="overflow-x:auto; display:none;">
+        <table id="tablaEditor" style="width:100%; border-collapse:collapse; font-size:13px;"></table>
+      </div>
+      <div id="editorVacio" style="text-align:center; color:#475569; padding:40px;">
+        Carga un Excel para empezar a editarlo
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+  let cabacerasExcel = [];
+  let filasExcel = [];
+
+  const zona        = document.getElementById("zonaSubida");
+  const input       = document.getElementById("inputArchivo");
+  const boton       = document.getElementById("botonExtraer");
+  const estado      = document.getElementById("estado");
+  const chips       = document.getElementById("listaChips");
+  const panelRes    = document.getElementById("panelResultados");
+  const contenido   = document.getElementById("contenidoResultados");
+  const filasHist   = document.getElementById("filasHistorial");
+  const histVacio   = document.getElementById("historialVacio");
+  const btnLimpiar  = document.getElementById("btnLimpiar");
+
+  let historial = [];
+
+  zona.addEventListener("click", () => input.click());
+
+  function mostrarChips(archivos) {
+    chips.innerHTML = "";
+    Array.from(archivos).forEach(f => {
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = "📎 " + f.name;
+      chips.appendChild(c);
+    });
+    boton.disabled = archivos.length === 0;
+  }
+
+  input.addEventListener("change", () => mostrarChips(input.files));
+
+  zona.addEventListener("dragover", e => { e.preventDefault(); zona.classList.add("activa"); });
+  zona.addEventListener("dragleave", () => zona.classList.remove("activa"));
+  zona.addEventListener("drop", e => {
+    e.preventDefault();
+    zona.classList.remove("activa");
+    input.files = e.dataTransfer.files;
+    mostrarChips(input.files);
+  });
+
+  function actualizarHistorial() {
+    if (historial.length === 0) {
+      histVacio.style.display = "block";
+      filasHist.innerHTML = "";
+      return;
+    }
+
+    histVacio.style.display = "none";
+   filasHist.innerHTML = `
+      <div class="fila-historial cabecera">
+        <span>Archivo</span><span>CIF</span><span>Fecha</span><span>Base Imp.</span><span>IVA</span><span>Total</span>
+      </div>
+    `;
+
+    historial.slice().reverse().forEach(item => {
+      const fila = document.createElement("div");
+      fila.className = "fila-historial dato";
+      fila.innerHTML = `
+        <span style="font-size:11px; color:#94a3b8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item._archivo || "—"}</span>
+        <span><span class="cif-badge">${item.CIF}</span></span>
+        <span>${item.Fecha || "—"}</span>
+        <span>${item["Base Imponible"]}</span>
+        <span>${item.IVA}</span>
+        <span>${item.Total}</span>
+      `;
+      filasHist.appendChild(fila);
+    });
+  }
+
+  btnLimpiar.addEventListener("click", () => {
+    historial = [];
+    actualizarHistorial();
+    panelRes.style.display = "none";
+  });
+
+  boton.addEventListener("click", async () => {
+    const archivos = input.files;
+    if (!archivos.length) return;
+
+    boton.disabled = true;
+    estado.textContent = `⏳ Procesando ${archivos.length} archivo(s)...`;
+    panelRes.style.display = "none";
+    contenido.innerHTML = "";
+
+    const formData = new FormData();
+    Array.from(archivos).forEach(f => formData.append("archivos", f));
+
+    const inputExcel = document.getElementById("inputExcel");
+    if (inputExcel && inputExcel.files[0]) formData.append("excel_base", inputExcel.files[0]);
+
+    try {
+     const respuesta = await fetch("/procesar", {
+        method: "POST",
+        body: formData
+      });
+
+      const json = await respuesta.json();
+
+      json.resultados.forEach(item => {
+        const bloque = document.createElement("div");
+        bloque.className = "tarjeta-resultado";
+
+        if (item.error) {
+          bloque.innerHTML = `
+            <div class="nombre-archivo">⚠️ ${item.archivo}</div>
+            <div style="color:#f87171;font-size:13px">${item.error}</div>`;
+        } else {
+          const d = item.datos;
+          bloque.innerHTML = `
+            <div class="nombre-archivo">📄 ${item.archivo}</div>
+            <div class="fila-dato"><span class="etiqueta">Razón Social</span><span class="valor">${d["Razón Social"]}</span></div>
+            <div class="fila-dato"><span class="etiqueta">CIF</span><span class="valor">${d.CIF}</span></div>
+            <div class="fila-dato"><span class="etiqueta">Número Factura</span><span class="valor">${d["Número Factura"]}</span></div>
+            <div class="fila-dato"><span class="etiqueta">Fecha</span><span class="valor">${d.Fecha}</span></div>
+            <div class="fila-dato"><span class="etiqueta">Base Imponible</span><span class="valor">${d["Base Imponible"]}</span></div>
+            <div class="fila-dato"><span class="etiqueta">IVA</span><span class="valor">${d.IVA}</span></div>
+            <div class="fila-dato"><span class="etiqueta">Total</span><span class="valor">${d.Total}</span></div>`;
+          historial.push({...d, _archivo: item.archivo});
+        }
+        contenido.appendChild(bloque);
+      });
+
+      actualizarHistorial();
+      panelRes.style.display = "block";
+      estado.textContent = "";
+
+    } catch (error) {
+      estado.textContent = "❌ Error al conectar con el servidor. ¿Está app.py en marcha?";
+    }
+
+    boton.disabled = false;
+  });
+
+  // Carga el estado del usuario al entrar
+async function cargarEstado() {
+ const res = await fetch("/estado");
+  const data = await res.json();
+
+  const texto = document.getElementById("textoContador");
+  const barra = document.getElementById("barraProgreso");
+
+  if (data.es_premium) {
+    texto.textContent = "✦ Premium · Ilimitadas";
+    texto.style.color = "#34d399";
+    barra.style.background = "#34d399";
+    barra.style.width = "100%";
+  } else if (!data.autenticado) {
+    const usadas = data.facturas_usadas || 0;
+    const restantes = 10 - usadas;
+    const porcentaje = (usadas / 10) * 100;
+    texto.textContent = `Invitado · ${restantes} facturas gratis restantes`;
+    barra.style.width = porcentaje + "%";
+    if (porcentaje < 50) { barra.style.background = "#34d399"; texto.style.color = "#34d399"; }
+    else if (porcentaje < 80) { barra.style.background = "#f59e0b"; texto.style.color = "#f59e0b"; }
+    else { barra.style.background = "#f87171"; texto.style.color = "#f87171"; }
+    document.getElementById("btnPremium").style.display = "inline-block";
+  } else {
+    const usadas = data.facturas_usadas;
+    const restantes = 30 - usadas;
+    const porcentaje = (usadas / 30) * 100;
+    texto.textContent = `${restantes} facturas restantes`;
+    barra.style.width = porcentaje + "%";
+    if (porcentaje < 50) { barra.style.background = "#34d399"; texto.style.color = "#34d399"; }
+    else if (porcentaje < 80) { barra.style.background = "#f59e0b"; texto.style.color = "#f59e0b"; }
+    else { barra.style.background = "#f87171"; texto.style.color = "#f87171"; }
+    document.getElementById("btnPremium").style.display = "inline-block";
+  }
+}
+
+cargarEstado();
+
+async function irAPremium() {
+  const res = await fetch("/crear-pago", { method: "POST" });
+  const data = await res.json();
+  if (data.url) window.location.href = data.url;
+}
+
+function abrirModal() {
+  const modal = document.getElementById("modalPremium");
+  modal.style.display = "flex";
+}
+
+function cerrarModal() {
+  document.getElementById("modalPremium").style.display = "none";
+}
+
+// ── PESTAÑAS ──────────────────────────────────────────
+function cambiarTab(tab) {
+  const pFacturas = document.getElementById("panelFacturas");
+  const pExcel    = document.getElementById("panelExcel");
+  const tFacturas = document.getElementById("tabFacturas");
+  const tExcel    = document.getElementById("tabExcel");
+
+  if (tab === "facturas") {
+    pFacturas.style.display = "grid";
+    pExcel.style.display    = "none";
+    tFacturas.style.color      = "#34d399";
+    tFacturas.style.background = "#1e293b";
+    tFacturas.style.border     = "2px solid #34d399";
+    tFacturas.style.boxShadow  = "0 0 12px rgba(52,211,153,0.3)";
+    tExcel.style.color         = "#64748b";
+    tExcel.style.background    = "#0f172a";
+    tExcel.style.border        = "2px solid #334155";
+    tExcel.style.boxShadow     = "none";
+} else {
+    pFacturas.style.display = "none";
+    pExcel.style.display    = "block";
+    tExcel.style.color         = "#34d399";
+    tExcel.style.background    = "#1e293b";
+    tExcel.style.border        = "2px solid #34d399";
+    tExcel.style.boxShadow     = "0 0 12px rgba(52,211,153,0.3)";
+    tFacturas.style.color      = "#64748b";
+    tFacturas.style.background = "#0f172a";
+    tFacturas.style.border     = "2px solid #334155";
+    tFacturas.style.boxShadow  = "none";
+  }
+}
+
+// ── EDITOR EXCEL ──────────────────────────────────────
+
+function renderTabla() {
+  const tabla     = document.getElementById("tablaEditor");
+  const container = document.getElementById("tablaEditorContainer");
+  const vacio     = document.getElementById("editorVacio");
+
+  if (filasExcel.length === 0 && cabacerasExcel.length === 0) {
+    container.style.display = "none";
+    vacio.style.display = "block";
+    return;
+  }
+
+  container.style.display = "block";
+  vacio.style.display = "none";
+
+  let html = "<thead><tr style='background:#1e293b;'>";
+  html += `<th style="padding:8px; color:#94a3b8; font-size:11px; border:1px solid #334155; width:60px;">Orden</th>`;
+  cabacerasExcel.forEach((cab, j) => {
+    html += `<th style="padding:8px; border:1px solid #334155; text-align:center;">
+      <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
+        <button onclick="moverColumna(${j}, -1)" style="background:none; border:none; color:#64748b; cursor:pointer; font-size:12px; padding:0;">◀</button>
+        <input value="${cab || ""}" onchange="cabacerasExcel[${j}]=this.value"
+          style="background:transparent; border:none; color:#94a3b8; text-align:center; width:100%; outline:none; font-size:11px; font-weight:700; text-transform:uppercase;"/>
+        <button onclick="moverColumna(${j}, 1)" style="background:none; border:none; color:#64748b; cursor:pointer; font-size:12px; padding:0;">▶</button>
+        <button onclick="borrarColumna(${j})" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:12px; padding:0; margin-left:4px;">🗑</button>
+      </div>
+    </th>`;
+  });
+  html += `<th style="padding:8px; color:#94a3b8; font-size:11px; border:1px solid #334155;">Acción</th></tr></thead><tbody>`;
+
+  filasExcel.forEach((fila, i) => {
+    const bg = i % 2 === 0 ? "#0f172a" : "#1e293b";
+    html += `<tr style="background:${bg};">`;
+    html += `<td style="padding:8px; border:1px solid #334155; text-align:center;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+        <button onclick="moverFila(${i}, -1)" style="background:none; border:none; color:#64748b; cursor:pointer; font-size:11px; padding:0; line-height:1;">▲</button>
+        <span style="color:#475569; font-size:11px;">${i + 1}</span>
+        <button onclick="moverFila(${i}, 1)" style="background:none; border:none; color:#64748b; cursor:pointer; font-size:11px; padding:0; line-height:1;">▼</button>
+      </div>
+    </td>`;
+    fila.forEach((celda, j) => {
+      html += `<td style="padding:8px; border:1px solid #334155; text-align:center;">
+        <input value="${celda || ""}" onchange="filasExcel[${i}][${j}]=this.value"
+          style="background:transparent; border:none; color:#e2e8f0; text-align:center; width:100%; outline:none; font-size:13px;"/>
+      </td>`;
+    });
+    html += `<td style="padding:8px; border:1px solid #334155; text-align:center;">
+      <button onclick="borrarFila(${i})" style="background:#7f1d1d; color:#fca5a5; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">🗑</button>
+    </td></tr>`;
+  });
+
+  html += "</tbody>";
+  tabla.innerHTML = html;
+}
+
+async function cargarExcel() {
+  const input = document.getElementById("inputExcelEditor");
+  const formData = new FormData();
+  if (input.files[0]) formData.append("excel", input.files[0]);
+
+  const res = await fetch("/leer-excel", { method: "POST", body: formData });
+  const data = await res.json();
+  cabacerasExcel = data.cabeceras;
+  filasExcel = data.filas;
+  renderTabla();
+}
+
+async function usarExcelGenerado() {
+  const res = await fetch("/leer-excel", { method: "POST", body: new FormData() });
+  const data = await res.json();
+  cabacerasExcel = data.cabeceras;
+  filasExcel = data.filas;
+  renderTabla();
+}
+
+function añadirFila() {
+  const filaVacia = cabacerasExcel.map(() => "");
+  filasExcel.push(filaVacia);
+  renderTabla();
+}
+
+function borrarFila(i) {
+  filasExcel.splice(i, 1);
+  renderTabla();
+}
+
+function borrarColumna(j) {
+  cabacerasExcel.splice(j, 1);
+  filasExcel.forEach(fila => fila.splice(j, 1));
+  renderTabla();
+}
+
+function añadirColumna() {
+  cabacerasExcel.push("Nueva columna");
+  filasExcel.forEach(fila => fila.push(""));
+  renderTabla();
+}
+
+function moverFila(i, direccion) {
+  const j = i + direccion;
+  if (j < 0 || j >= filasExcel.length) return;
+  const temp = filasExcel[i];
+  filasExcel[i] = filasExcel[j];
+  filasExcel[j] = temp;
+  renderTabla();
+}
+
+function moverColumna(j, direccion) {
+  const k = j + direccion;
+  if (k < 0 || k >= cabacerasExcel.length) return;
+  // Mover cabecera
+  const tempCab = cabacerasExcel[j];
+  cabacerasExcel[j] = cabacerasExcel[k];
+  cabacerasExcel[k] = tempCab;
+  // Mover datos en todas las filas
+  filasExcel.forEach(fila => {
+    const tempVal = fila[j];
+    fila[j] = fila[k];
+    fila[k] = tempVal;
+  });
+  renderTabla();
+}
+
+async function guardarExcel() {
+  const res = await fetch("/guardar-excel", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ cabeceras: cabacerasExcel, filas: filasExcel })
+  });
+
+  if (res.ok) {
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "facturas_editadas.xlsx";
+    a.click();
+  }
+}
+
+</script>
+
+<!-- MODAL PREMIUM -->
+<div id="modalPremium" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#1e293b; border:1px solid #334155; border-radius:20px; padding:40px; max-width:480px; width:90%; position:relative;">
+    
+    <button onclick="cerrarModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#64748b; font-size:20px; cursor:pointer;">✕</button>
+
+    <div style="text-align:center; margin-bottom:28px;">
+      <div style="font-size:36px; margin-bottom:10px;">⚡</div>
+      <div style="font-size:22px; font-weight:800; color:#f1f5f9;">Hazte Premium</div>
+      <div style="font-size:14px; color:#64748b; margin-top:6px;">Todo lo que necesitas para automatizar tus facturas</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:28px;">
+      <div style="display:flex; align-items:center; gap:12px; background:#0f172a; border-radius:10px; padding:14px;">
+        <span style="font-size:20px;">♾️</span>
+        <div>
+          <div style="font-weight:700; color:#f1f5f9; font-size:14px;">Facturas ilimitadas</div>
+          <div style="font-size:12px; color:#64748b;">Sin límites mensuales, procesa todo lo que necesites</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; background:#0f172a; border-radius:10px; padding:14px;">
+        <span style="font-size:20px;">📊</span>
+        <div>
+          <div style="font-weight:700; color:#f1f5f9; font-size:14px;">Excel con formato profesional</div>
+          <div style="font-size:12px; color:#64748b;">Exporta todos los datos con colores y diseño cuidado</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; background:#0f172a; border-radius:10px; padding:14px;">
+        <span style="font-size:20px;">🖼️</span>
+        <div>
+          <div style="font-weight:700; color:#f1f5f9; font-size:14px;">PDFs e imágenes</div>
+          <div style="font-size:12px; color:#64748b;">Sube fotos de tickets y facturas en JPG, PNG o PDF</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; background:#0f172a; border-radius:10px; padding:14px;">
+        <span style="font-size:20px;">⚡</span>
+        <div>
+          <div style="font-weight:700; color:#f1f5f9; font-size:14px;">Procesado múltiple</div>
+          <div style="font-size:12px; color:#64748b;">Sube varios archivos a la vez y extrae todos de golpe</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-bottom:20px;">
+      <span style="font-size:36px; font-weight:800; color:#34d399;">5€</span>
+      <span style="color:#64748b; font-size:14px;">/mes · Cancela cuando quieras</span>
+    </div>
+
+    <button onclick="irAPremium()" style="width:100%; padding:14px; background:linear-gradient(135deg, #34d399, #059669); color:#0f172a; border:none; border-radius:12px; font-size:16px; font-weight:800; cursor:pointer;">
+      Empezar ahora →
+    </button>
+
+    <div style="text-align:center; margin-top:12px; font-size:12px; color:#475569;">
+      Pago seguro con Stripe · Sin permanencia
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

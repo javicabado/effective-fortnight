@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FacturaAI — Crear cuenta</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .tarjeta {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .logo { font-size: 24px; font-weight: 800; color: #34d399; margin-bottom: 6px; }
+    .logo span { color: #fff; }
+    .subtitulo { color: #64748b; font-size: 14px; margin-bottom: 32px; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    input:focus { border-color: #34d399; }
+
+    .gratis {
+      background: #064e3b;
+      border: 1px solid #34d399;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #34d399;
+      text-align: center;
+    }
+
+    .boton {
+      width: 100%;
+      padding: 13px;
+      margin-top: 20px;
+      background: #34d399;
+      color: #0f172a;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .boton:hover { background: #6ee7b7; }
+
+    .error {
+      margin-top: 14px;
+      color: #f87171;
+      font-size: 13px;
+      text-align: center;
+      display: none;
+    }
+
+    .enlace {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .enlace a { color: #34d399; text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+<div class="tarjeta">
+  <div class="logo">Factura<span>AI</span></div>
+  <div class="subtitulo">Crea tu cuenta gratuita</div>
+
+  <label>Email</label>
+  <input type="email" id="email" placeholder="tu@email.com"/>
+
+  <label>Contraseña</label>
+  <input type="password" id="password" placeholder="Mínimo 6 caracteres"/>
+
+  <label>Repite la contraseña</label>
+  <input type="password" id="password2" placeholder="••••••••"/>
+
+  <button class="boton" id="boton">Crear cuenta</button>
+  <div class="error" id="error"></div>
+
+  <div class="enlace">
+    ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
+  </div>
+</div>
+
+<script>
+  document.getElementById("boton").addEventListener("click", async () => {
+    const email    = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const password2 = document.getElementById("password2").value;
+    const errorDiv = document.getElementById("error");
+
+    if (!email || !password || !password2) {
+      errorDiv.textContent = "Por favor rellena todos los campos";
+      errorDiv.style.display = "block";
+      return;
+    }
+
+    if (password !== password2) {
+      errorDiv.textContent = "Las contraseñas no coinciden";
+      errorDiv.style.display = "block";
+      return;
+    }
+
+    if (password.length < 6) {
+      errorDiv.textContent = "La contraseña debe tener al menos 6 caracteres";
+      errorDiv.style.display = "block";
+      return;
+    }
+
+    const res = await fetch("/registro", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, contraseña: password })
+    });
+
+    const data = await res.json();
+
+    if (data.ok) {
+      window.location.href = "/";
+    } else {
+      errorDiv.textContent = data.error;
+      errorDiv.style.display = "block";
+    }
+  });
+</script>
+</body>
+</html>
