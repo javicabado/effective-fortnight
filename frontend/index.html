@@ -111,18 +111,188 @@
     .btn-limpiar { background: transparent; border: 1px solid #334155; color: #64748b; border-radius: 6px; padding: 3px 10px; font-size: 11px; cursor: pointer; }
     .btn-limpiar:hover { border-color: #f87171; color: #f87171; }
 
-    /* MODAL */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: none; align-items: center; justify-content: center; }
+    /* ── MODAL PREMIUM ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
     .modal-overlay.visible { display: flex; }
-    .modal { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 32px; max-width: 460px; width: 90%; }
-    .modal h2 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
-    .modal p { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
-    .modal ul { list-style: none; margin-bottom: 24px; }
-    .modal ul li { padding: 6px 0; font-size: 14px; color: #cbd5e1; }
-    .modal ul li::before { content: '✓ '; color: #34d399; font-weight: 700; }
+
+    .modal-premium {
+      background: #0f172a;
+      border: 1px solid #1e3a2e;
+      border-radius: 20px;
+      max-width: 480px;
+      width: 94%;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(52,211,153,0.12), 0 30px 60px rgba(0,0,0,0.5);
+      animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.92) translateY(16px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Cabecera con gradiente */
+    .modal-header {
+      background: linear-gradient(135deg, #064e3b 0%, #0f172a 60%);
+      padding: 32px 32px 24px;
+      position: relative;
+      border-bottom: 1px solid #1e3a2e;
+      overflow: hidden;
+    }
+    .modal-header::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(52,211,153,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .modal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(52,211,153,0.12);
+      border: 1px solid rgba(52,211,153,0.3);
+      border-radius: 99px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #34d399;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .modal-titulo {
+      font-size: 26px;
+      font-weight: 800;
+      color: #f1f5f9;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .modal-titulo span { color: #34d399; }
+    .modal-subtitulo {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    /* Precio destacado */
+    .modal-precio {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-top: 16px;
+    }
+    .precio-numero {
+      font-size: 42px;
+      font-weight: 900;
+      color: #34d399;
+      line-height: 1;
+    }
+    .precio-detalle {
+      display: flex;
+      flex-direction: column;
+    }
+    .precio-moneda { font-size: 18px; font-weight: 700; color: #34d399; }
+    .precio-periodo { font-size: 12px; color: #64748b; }
+
+    /* Cuerpo del modal */
+    .modal-body { padding: 24px 32px; }
+
+    .modal-features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 12px;
+      transition: border-color 0.2s;
+    }
+    .feature-item:hover { border-color: rgba(52,211,153,0.3); }
+    .feature-icon {
+      width: 32px; height: 32px;
+      background: rgba(52,211,153,0.1);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .feature-texto strong {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 2px;
+    }
+    .feature-texto span {
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.4;
+    }
+
+    /* Garantía */
+    .modal-garantia {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(52,211,153,0.05);
+      border: 1px solid rgba(52,211,153,0.15);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .modal-garantia span { font-size: 18px; }
+
+    /* Botones */
     .modal-btns { display: flex; gap: 10px; }
-    .btn-modal-pagar { flex: 1; background: #34d399; color: #0f172a; font-weight: 700; border: none; border-radius: 8px; padding: 12px; cursor: pointer; font-size: 14px; }
-    .btn-modal-cerrar { background: transparent; border: 1px solid #334155; color: #64748b; border-radius: 8px; padding: 12px 20px; cursor: pointer; font-size: 14px; }
+    .btn-modal-pagar {
+      flex: 1;
+      background: linear-gradient(135deg, #34d399, #059669);
+      color: #0f172a;
+      font-weight: 800;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(52,211,153,0.25);
+    }
+    .btn-modal-pagar:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(52,211,153,0.4);
+    }
+    .btn-modal-cerrar {
+      background: transparent;
+      border: 1px solid #334155;
+      color: #64748b;
+      border-radius: 10px;
+      padding: 14px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .btn-modal-cerrar:hover { border-color: #475569; color: #94a3b8; }
 
     /* EXCEL EDITOR */
     #panelExcel { grid-column: 1 / -1; }
@@ -216,19 +386,68 @@
 
   <!-- MODAL PREMIUM -->
   <div class="modal-overlay" id="modalPremium">
-    <div class="modal">
-      <h2>⚡ FacturaAI Premium</h2>
-      <p>Desbloquea todas las funcionalidades por solo 5€/mes</p>
-      <ul>
-        <li>Facturas ilimitadas</li>
-        <li>Procesado múltiple a la vez</li>
-        <li>Export a Excel profesional</li>
-        <li>Soporte prioritario</li>
-      </ul>
-      <div class="modal-btns">
-        <button class="btn-modal-pagar" onclick="irAPremium()">Hazte Premium · 5€/mes</button>
-        <button class="btn-modal-cerrar" onclick="cerrarModal()">Ahora no</button>
+    <div class="modal-premium">
+
+      <!-- Cabecera -->
+      <div class="modal-header">
+        <div class="modal-badge">⚡ Plan Premium</div>
+        <div class="modal-titulo">Extrae facturas sin<br><span>límites</span></div>
+        <div class="modal-subtitulo">Sin restricciones, sin interrupciones. Todo por menos de un café al mes.</div>
+        <div class="modal-precio">
+          <div class="precio-numero">5</div>
+          <div class="precio-detalle">
+            <span class="precio-moneda">€</span>
+            <span class="precio-periodo">/ mes · cancela cuando quieras</span>
+          </div>
+        </div>
       </div>
+
+      <!-- Cuerpo -->
+      <div class="modal-body">
+        <div class="modal-features">
+          <div class="feature-item">
+            <div class="feature-icon">♾️</div>
+            <div class="feature-texto">
+              <strong>Facturas ilimitadas</strong>
+              <span>Sin límite diario ni mensual</span>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-texto">
+              <strong>IA avanzada</strong>
+              <span>Extracción con inteligencia artificial</span>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">📊</div>
+            <div class="feature-texto">
+              <strong>Excel profesional</strong>
+              <span>Formato y estilos incluidos</span>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🗂️</div>
+            <div class="feature-texto">
+              <strong>Lotes masivos</strong>
+              <span>Procesa cientos a la vez</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-garantia">
+          <span>🛡️</span>
+          <span>Sin permanencia · Cancela en cualquier momento desde tu cuenta</span>
+        </div>
+
+        <div class="modal-btns">
+          <button class="btn-modal-pagar" onclick="irAPremium()">
+            <span>⚡</span> Activar Premium · 5€/mes
+          </button>
+          <button class="btn-modal-cerrar" onclick="cerrarModal()">Ahora no</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -387,7 +606,6 @@
         contenido.appendChild(bloque);
       });
 
-      // Añadir listener al botón después de crear el DOM
       document.querySelectorAll("#btnIrExcel").forEach(btn => {
         btn.addEventListener("click", () => cambiarTab("excel"));
       });

@@ -80,7 +80,6 @@ def login():
     usuario = Usuario.query.filter_by(email=email).first()
     if not usuario or not check_password_hash(usuario.contraseña, contraseña):
         return jsonify({"error": "Email o contraseña incorrectos"}), 401
-    # Transferir facturas de invitado
     facturas_invitado = session.get("facturas_invitado", 0)
     if facturas_invitado > 0:
         usuario.facturas_usadas = max(usuario.facturas_usadas, facturas_invitado)
@@ -100,7 +99,6 @@ def logout():
 # ── PROCESAR FACTURAS ─────────────────────────────────
 @app.route("/procesar", methods=["POST"])
 def procesar_facturas():
-    # Invitado: rastrear por IP
     if "usuario_id" not in session:
         ip = request.remote_addr
         invitado = InvitadoIP.query.filter_by(ip=ip).first()
@@ -202,21 +200,28 @@ def estado_usuario():
         "facturas_restantes": max(0, LIMITE_GRATIS_REGISTRADO - usuario.facturas_usadas) if not usuario.es_premium else "ilimitadas"
     })
 
+
 # ── CREAR SESIÓN DE PAGO ──────────────────────────────
 @app.route("/crear-pago", methods=["POST"])
 def crear_pago():
     if "usuario_id" not in session:
         return jsonify({"error": "Debes iniciar sesión"}), 401
 
+    if not stripe.api_key:
+        return jsonify({"error": "Stripe no configurado"}), 500
+
     usuario = Usuario.query.get(session["usuario_id"])
+
+    # URL dinámica: funciona en local Y en producción automáticamente
+    base_url = request.host_url.rstrip("/")
 
     checkout = stripe.checkout.Session.create(
         payment_method_types=["card"],
         mode="subscription",
         line_items=[{"price": STRIPE_PRICE_ID, "quantity": 1}],
         customer_email=usuario.email,
-        success_url="http://127.0.0.1:5000/pago-exitoso?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url="http://127.0.0.1:5000/",
+        success_url=f"{base_url}/pago-exitoso?session_id={{CHECKOUT_SESSION_ID}}",
+        cancel_url=f"{base_url}/",
     )
     return jsonify({"url": checkout.url})
 
@@ -226,11 +231,9 @@ def crear_pago():
 def pago_exitoso():
     if "usuario_id" not in session:
         return redirect("/login")
-
     usuario = Usuario.query.get(session["usuario_id"])
     usuario.es_premium = True
     db.session.commit()
-
     return redirect("/")
 
 
@@ -245,7 +248,6 @@ def leer_excel():
         return jsonify({"error": "Debes iniciar sesión"}), 401
 
     if "excel" not in request.files:
-        # Si no sube Excel, devuelve el generado
         if os.path.exists(EXCEL_PATH):
             libro = openpyxl.load_workbook(EXCEL_PATH)
         else:
@@ -327,5 +329,3 @@ def test_ocr():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
-    

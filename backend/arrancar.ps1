@@ -1,0 +1,5 @@
+$env:STRIPE_SECRET_KEY="sk_test_51T8cPP9TXgXDc5x0j3LLniuUSTRD6LHTqXEKlBNqh8b4DL79ZEUzOta08fJsd8Kyr0PTkKAi9jSMXmph7By2Lmxd00LtowwKDs"
+$env:STRIPE_PRICE_ID="price_1T8cfn9TXgXDc5x00xrPVwHf"
+$env:STRIPE_PK="pk_test_51T8cPP9TXgXDc5x0P5SgJF8f9PyZaXiMpfAwBqNrqMmoZTF0Fl7lpddChlqODBc6FlMhsuXDGn3twaQUtG9GL6KE00DSkRtZxy"
+venv\Scripts\activate
+python app.py
