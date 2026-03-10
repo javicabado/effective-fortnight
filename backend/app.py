@@ -207,18 +207,29 @@ def crear_pago():
     if "usuario_id" not in session:
         return jsonify({"error": "Debes iniciar sesión"}), 401
 
-    if not stripe.api_key:
-        return jsonify({"error": "Stripe no configurado"}), 500
+    # 1. Leemos el Precio ID en el momento exacto para evitar variables vacías
+    precio_id = os.environ.get("STRIPE_PRICE_ID")
+    
+    if not stripe.api_key or not precio_id:
+        return jsonify({"error": "Faltan claves de Stripe en el servidor"}), 500
 
     usuario = Usuario.query.get(session["usuario_id"])
 
-    # URL dinámica: funciona en local Y en producción automáticamente
-    base_url = request.host_url.rstrip("/")
+    # 2. Obtenemos la URL de origen de forma fiable
+    # request.headers.get("Origin") lee la dirección exacta desde el navegador del usuario
+    base_url = request.headers.get("Origin") 
+    
+    if not base_url:
+        base_url = request.host_url.rstrip("/")
+        # Si falla el Origin, forzamos el HTTPS manualmente en producción
+        if "onrender.com" in base_url and base_url.startswith("http://"):
+            base_url = base_url.replace("http://", "https://")
 
+    # 3. Creamos la sesión en Stripe
     checkout = stripe.checkout.Session.create(
         payment_method_types=["card"],
         mode="subscription",
-        line_items=[{"price": STRIPE_PRICE_ID, "quantity": 1}],
+        line_items=[{"price": precio_id, "quantity": 1}],
         customer_email=usuario.email,
         success_url=f"{base_url}/pago-exitoso?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{base_url}/",
