@@ -30,7 +30,6 @@
       overflow-x: hidden;
     }
 
-    /* Grid background */
     body::before {
       content: '';
       position: fixed;
@@ -43,7 +42,6 @@
       z-index: 0;
     }
 
-    /* Glow orb */
     body::after {
       content: '';
       position: fixed;
@@ -57,7 +55,6 @@
       z-index: 0;
     }
 
-    /* NAV */
     nav {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -71,20 +68,10 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .nav-logo {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--text);
-    }
-
+    .nav-logo { font-size: 22px; font-weight: 800; color: var(--text); }
     .nav-logo span { color: var(--green); }
 
-    .nav-links {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
+    .nav-links { display: flex; gap: 12px; align-items: center; }
 
     .btn-secondary {
       padding: 9px 20px;
@@ -98,11 +85,7 @@
       background: transparent;
       cursor: pointer;
     }
-
-    .btn-secondary:hover {
-      border-color: var(--green);
-      color: var(--green);
-    }
+    .btn-secondary:hover { border-color: var(--green); color: var(--green); }
 
     .btn-primary {
       padding: 9px 22px;
@@ -116,13 +99,8 @@
       transition: all 0.2s;
       cursor: pointer;
     }
+    .btn-primary:hover { background: #10b981; transform: translateY(-1px); }
 
-    .btn-primary:hover {
-      background: #10b981;
-      transform: translateY(-1px);
-    }
-
-    /* HERO */
     .hero {
       position: relative;
       z-index: 1;
@@ -159,7 +137,6 @@
     }
 
     h1 {
-      font-family: 'Segoe UI', sans-serif;
       font-size: clamp(42px, 6vw, 76px);
       font-weight: 800;
       line-height: 1.05;
@@ -167,11 +144,7 @@
       margin-bottom: 24px;
       animation: fadeUp 0.6s 0.1s ease both;
     }
-
-    h1 em {
-      font-style: normal;
-      color: var(--green);
-    }
+    h1 em { font-style: normal; color: var(--green); }
 
     .hero-sub {
       font-size: 18px;
@@ -205,12 +178,7 @@
       align-items: center;
       gap: 8px;
     }
-
-    .btn-hero:hover {
-      background: #10b981;
-      transform: translateY(-2px);
-      box-shadow: 0 12px 30px rgba(52,211,153,0.3);
-    }
+    .btn-hero:hover { background: #10b981; transform: translateY(-2px); box-shadow: 0 12px 30px rgba(52,211,153,0.3); }
 
     .btn-hero-outline {
       padding: 15px 32px;
@@ -226,18 +194,13 @@
       align-items: center;
       gap: 8px;
     }
-
-    .btn-hero-outline:hover {
-      border-color: var(--muted);
-      color: var(--text);
-    }
+    .btn-hero-outline:hover { border-color: var(--muted); color: var(--text); }
 
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* DEMO VISUAL */
     .demo-wrap {
       position: relative;
       z-index: 1;
@@ -264,10 +227,7 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .demo-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-    }
+    .demo-dot { width: 10px; height: 10px; border-radius: 50%; }
 
     .demo-content {
       padding: 32px;
@@ -287,7 +247,6 @@
       padding: 40px 20px;
       gap: 12px;
     }
-
     .demo-left .icon { font-size: 36px; }
     .demo-left p { color: var(--muted); font-size: 13px; text-align: center; }
 
@@ -301,18 +260,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      animation: shimmer 2s infinite;
     }
-
     .demo-field .label { color: var(--muted); font-size: 12px; }
+    .demo-field .value { font-size: 13px; font-weight: 600; color: var(--green); }
 
-    .demo-field .value {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--green);
-    }
-
-    /* STATS */
     .stats {
       position: relative;
       z-index: 1;
@@ -330,22 +281,11 @@
       padding: 36px;
       text-align: center;
     }
-
     .stat:first-child { border-radius: 12px 0 0 12px; }
     .stat:last-child { border-radius: 0 12px 12px 0; }
-
-    .stat-num {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 48px;
-      font-weight: 800;
-      color: var(--green);
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-
+    .stat-num { font-size: 48px; font-weight: 800; color: var(--green); line-height: 1; margin-bottom: 8px; }
     .stat-label { color: var(--muted); font-size: 14px; }
 
-    /* FEATURES */
     .section {
       position: relative;
       z-index: 1;
@@ -354,29 +294,10 @@
       padding: 0 60px;
     }
 
-    .section-label {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--green);
-      margin-bottom: 16px;
-    }
+    .section-label { font-size: 12px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--green); margin-bottom: 16px; }
+    .section-title { font-size: clamp(28px, 4vw, 44px); font-weight: 800; letter-spacing: -1px; margin-bottom: 60px; max-width: 500px; }
 
-    .section-title {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: clamp(28px, 4vw, 44px);
-      font-weight: 800;
-      letter-spacing: -1px;
-      margin-bottom: 60px;
-      max-width: 500px;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 
     .feature-card {
       background: var(--card);
@@ -385,38 +306,12 @@
       padding: 28px;
       transition: all 0.3s;
     }
+    .feature-card:hover { border-color: var(--green-dim); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+    .feature-icon { font-size: 28px; margin-bottom: 16px; }
+    .feature-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+    .feature-desc { color: var(--muted); font-size: 14px; line-height: 1.7; }
 
-    .feature-card:hover {
-      border-color: var(--green-dim);
-      transform: translateY(-4px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-    }
-
-    .feature-icon {
-      font-size: 28px;
-      margin-bottom: 16px;
-    }
-
-    .feature-title {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .feature-desc {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    /* PRICING */
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      max-width: 700px;
-    }
+    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 700px; }
 
     .price-card {
       background: var(--card);
@@ -425,109 +320,24 @@
       padding: 32px;
       transition: all 0.3s;
     }
+    .price-card.featured { border-color: var(--green); position: relative; overflow: hidden; }
+    .price-card.featured::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--green); }
 
-    .price-card.featured {
-      border-color: var(--green);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .price-card.featured::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--green);
-    }
-
-    .price-badge {
-      display: inline-block;
-      background: rgba(52,211,153,0.15);
-      color: var(--green);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-    }
-
-    .price-name {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .price-amount {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 42px;
-      font-weight: 800;
-      color: var(--green);
-      line-height: 1;
-      margin-bottom: 6px;
-    }
-
-    .price-amount span {
-      font-size: 16px;
-      color: var(--muted);
-      font-weight: 400;
-    }
-
-    .price-desc {
-      color: var(--muted);
-      font-size: 13px;
-      margin-bottom: 24px;
-    }
-
+    .price-badge { display: inline-block; background: rgba(52,211,153,0.15); color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; margin-bottom: 20px; }
+    .price-name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .price-amount { font-size: 42px; font-weight: 800; color: var(--green); line-height: 1; margin-bottom: 6px; }
+    .price-amount span { font-size: 16px; color: var(--muted); font-weight: 400; }
+    .price-desc { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
     .price-features { list-style: none; margin-bottom: 28px; }
+    .price-features li { color: var(--muted); font-size: 14px; padding: 6px 0; display: flex; align-items: center; gap: 8px; }
+    .price-features li::before { content: '✓'; color: var(--green); font-weight: 700; }
 
-    .price-features li {
-      color: var(--muted);
-      font-size: 14px;
-      padding: 6px 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .price-features li::before {
-      content: '✓';
-      color: var(--green);
-      font-weight: 700;
-    }
-
-    .btn-plan {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      text-align: center;
-      text-decoration: none;
-      transition: all 0.2s;
-      cursor: pointer;
-      border: none;
-    }
-
-    .btn-plan-outline {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-    }
-
+    .btn-plan { display: block; width: 100%; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 700; text-align: center; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; }
+    .btn-plan-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
     .btn-plan-outline:hover { border-color: var(--green); color: var(--green); }
-
-    .btn-plan-green {
-      background: var(--green);
-      color: #080f1a;
-    }
-
+    .btn-plan-green { background: var(--green); color: #080f1a; }
     .btn-plan-green:hover { background: #10b981; }
 
-    /* CTA */
     .cta-section {
       position: relative;
       z-index: 1;
@@ -539,31 +349,10 @@
       text-align: center;
       overflow: hidden;
     }
+    .cta-section::before { content: ''; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(52,211,153,0.1), transparent 60%); pointer-events: none; }
+    .cta-title { font-size: clamp(28px, 4vw, 48px); font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; }
+    .cta-sub { color: var(--muted); font-size: 16px; margin-bottom: 36px; }
 
-    .cta-section::before {
-      content: '';
-      position: absolute;
-      top: -100px; right: -100px;
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(52,211,153,0.1), transparent 60%);
-      pointer-events: none;
-    }
-
-    .cta-title {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: clamp(28px, 4vw, 48px);
-      font-weight: 800;
-      letter-spacing: -1px;
-      margin-bottom: 16px;
-    }
-
-    .cta-sub {
-      color: var(--muted);
-      font-size: 16px;
-      margin-bottom: 36px;
-    }
-
-    /* FOOTER */
     footer {
       position: relative;
       z-index: 1;
@@ -575,14 +364,7 @@
       color: var(--muted);
       font-size: 13px;
     }
-
-    .footer-logo {
-      font-family: 'Segoe UI', sans-serif;
-      font-weight: 800;
-      color: var(--text);
-      font-size: 16px;
-    }
-
+    .footer-logo { font-weight: 800; color: var(--text); font-size: 16px; }
     .footer-logo span { color: var(--green); }
 
     @media (max-width: 768px) {
@@ -611,15 +393,14 @@
     </div>
   </nav>
 
-  <!-- HERO -->
   <section class="hero">
     <div class="badge">
       <div class="badge-dot"></div>
       Extracción automática de facturas
     </div>
     <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.3); border-radius:99px; padding:6px 16px; font-size:13px; color:#fbbf24; margin-bottom:16px;">
-  ⚠ Versión Beta · Estamos en desarrollo, puede haber errores
-</div>
+      ⚠ Versión Beta · Estamos en desarrollo, puede haber errores
+    </div>
     <h1>Extrae datos de<br>facturas en <em>segundos</em></h1>
     <p class="hero-sub">Sube tus PDFs y obtén Razón Social, CIF, Fecha, Base Imponible, IVA y Total en un Excel listo para usar. Sin esfuerzo manual.</p>
     <div class="hero-ctas">
@@ -628,7 +409,6 @@
     </div>
   </section>
 
-  <!-- DEMO VISUAL -->
   <div class="demo-wrap">
     <div class="demo-card">
       <div class="demo-bar">
@@ -643,90 +423,36 @@
           <p>factura-ejemplo.pdf<br><span style="color:var(--green); font-size:11px;">✓ Procesado</span></p>
         </div>
         <div class="demo-right">
-          <div class="demo-field">
-            <span class="label">Razón Social</span>
-            <span class="value">TechSoluciones S.L.</span>
-          </div>
-          <div class="demo-field">
-            <span class="label">CIF</span>
-            <span class="value">B98765432</span>
-          </div>
-          <div class="demo-field">
-            <span class="label">Nº Factura</span>
-            <span class="value">F-2024-0142</span>
-          </div>
-          <div class="demo-field">
-            <span class="label">Fecha</span>
-            <span class="value">28/02/2024</span>
-          </div>
-          <div class="demo-field">
-            <span class="label">Base Imponible</span>
-            <span class="value">2.350,00 EUR</span>
-          </div>
-          <div class="demo-field">
-            <span class="label">Total</span>
-            <span class="value">2.843,50 EUR</span>
-          </div>
+          <div class="demo-field"><span class="label">Razón Social</span><span class="value">TechSoluciones S.L.</span></div>
+          <div class="demo-field"><span class="label">CIF</span><span class="value">B98765432</span></div>
+          <div class="demo-field"><span class="label">Nº Factura</span><span class="value">F-2024-0142</span></div>
+          <div class="demo-field"><span class="label">Fecha</span><span class="value">28/02/2024</span></div>
+          <div class="demo-field"><span class="label">Base Imponible</span><span class="value">2.350,00 EUR</span></div>
+          <div class="demo-field"><span class="label">Total</span><span class="value">2.843,50 EUR</span></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- STATS -->
   <div class="stats">
-    <div class="stat">
-      <div class="stat-num">7</div>
-      <div class="stat-label">campos extraídos por factura</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">&lt;5s</div>
-      <div class="stat-label">tiempo de procesado</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">∞</div>
-      <div class="stat-label">formatos de factura soportados</div>
-    </div>
+    <div class="stat"><div class="stat-num">7</div><div class="stat-label">campos extraídos por factura</div></div>
+    <div class="stat"><div class="stat-num">&lt;5s</div><div class="stat-label">tiempo de procesado</div></div>
+    <div class="stat"><div class="stat-num">∞</div><div class="stat-label">formatos de factura soportados</div></div>
   </div>
 
-  <!-- FEATURES -->
   <section class="section">
     <div class="section-label">Funcionalidades</div>
     <h2 class="section-title">Todo lo que necesitas</h2>
     <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🤖</div>
-        <div class="feature-title">Extracción inteligente</div>
-        <div class="feature-desc">Reconoce cualquier estructura de factura, incluso las más complejas con varias páginas, columnas y formatos raros.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <div class="feature-title">Export a Excel</div>
-        <div class="feature-desc">Genera automáticamente un Excel profesional con todos los datos organizados y formateados listos para tu contabilidad.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <div class="feature-title">Procesado múltiple</div>
-        <div class="feature-desc">Sube varias facturas a la vez y obtenlas todas en un único Excel. Ahorra horas de trabajo manual.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">✏️</div>
-        <div class="feature-title">Editor integrado</div>
-        <div class="feature-desc">Edita los datos directamente en la web antes de descargar. Corrige errores, añade filas o columnas sin abrir Excel.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <div class="feature-title">Seguro y privado</div>
-        <div class="feature-desc">Tus facturas no se almacenan. Se procesan y se eliminan. Tu información financiera siempre es tuya.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🇪🇸</div>
-        <div class="feature-title">Diseñado para España</div>
-        <div class="feature-desc">Reconoce CIF, NIF, NIE, IVA (21%, 10%, 4%) y los formatos de factura más comunes del mercado español.</div>
-      </div>
+      <div class="feature-card"><div class="feature-icon">🤖</div><div class="feature-title">Extracción inteligente</div><div class="feature-desc">Reconoce cualquier estructura de factura, incluso las más complejas con varias páginas, columnas y formatos raros.</div></div>
+      <div class="feature-card"><div class="feature-icon">📊</div><div class="feature-title">Export a Excel</div><div class="feature-desc">Genera automáticamente un Excel profesional con todos los datos organizados y formateados listos para tu contabilidad.</div></div>
+      <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">Procesado múltiple</div><div class="feature-desc">Sube varias facturas a la vez y obtenlas todas en un único Excel. Ahorra horas de trabajo manual.</div></div>
+      <div class="feature-card"><div class="feature-icon">✏️</div><div class="feature-title">Editor integrado</div><div class="feature-desc">Edita los datos directamente en la web antes de descargar. Corrige errores, añade filas o columnas sin abrir Excel.</div></div>
+      <div class="feature-card"><div class="feature-icon">🔒</div><div class="feature-title">Seguro y privado</div><div class="feature-desc">Tus facturas no se almacenan. Se procesan y se eliminan. Tu información financiera siempre es tuya.</div></div>
+      <div class="feature-card"><div class="feature-icon">🇪🇸</div><div class="feature-title">Diseñado para España</div><div class="feature-desc">Reconoce CIF, NIF, NIE, IVA (21%, 10%, 4%) y los formatos de factura más comunes del mercado español.</div></div>
     </div>
   </section>
 
-  <!-- PRICING -->
   <section class="section">
     <div class="section-label">Precios</div>
     <h2 class="section-title">Simple y transparente</h2>
@@ -746,7 +472,7 @@
       <div class="price-card featured">
         <div class="price-badge">Más popular</div>
         <div class="price-name">Premium</div>
-        <div class="price-amount">5€<span>/mes</span></div>
+        <div class="price-amount">10€<span>/mes</span></div>
         <div class="price-desc">Para gestorías y autónomos</div>
         <ul class="price-features">
           <li>Facturas ilimitadas</li>
@@ -759,7 +485,6 @@
     </div>
   </section>
 
-  <!-- CTA -->
   <div class="cta-section">
     <h2 class="cta-title">Empieza a ahorrar tiempo hoy</h2>
     <p class="cta-sub">Sin tarjeta de crédito. Sin instalaciones. Funciona desde el navegador.</p>
