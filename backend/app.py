@@ -337,6 +337,10 @@ def test_ocr():
     texto = extraer_texto(ruta)
     return jsonify({"texto": texto})
 
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(".", "favicon.ico")
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
