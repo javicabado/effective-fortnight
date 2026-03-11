@@ -25,18 +25,29 @@ def extraer_con_ia(texto):
     try:
         from groq import Groq
         cliente = Groq(api_key=api_key)
-        prompt = f"""Eres un experto en contabilidad española. Analiza este texto de una factura y extrae exactamente estos 7 campos.
+        prompt = f"""Eres un experto en contabilidad española. Analiza este texto de una factura y extrae exactamente estos 8 campos.
 
-REGLAS CRÍTICAS:
-- "Razón Social" = el EMISOR (quien COBRA, el proveedor), NO el cliente
-- "CIF" = el NIF/CIF del EMISOR, no del cliente
-- "Base Imponible", "IVA", "Total" = solo el número con 2 decimales, sin € ni texto. Ejemplo: 1234.56
-- "Fecha" = formato DD/MM/YYYY si es posible
-- Si un campo no existe en el texto escribe exactamente: No encontrado
+DEFINICIONES IMPORTANTES:
+- EMISOR = la empresa que HA CREADO y ENVIADO la factura. Es quien COBRA. Normalmente aparece en la cabecera/membrete del documento con su nombre, CIF y dirección. Su dominio de email también puede identificarlo.
+- CLIENTE = la empresa que RECIBE la factura. Es quien PAGA. Aparece tras etiquetas como "RAZÓN SOCIAL:", "Cliente:", "Facturar a:", "A/Att:", "Dirección envío factura:", "COD. CLIENTE", etc.
+
+CASOS ESPECIALES (muy importantes):
+- Si ves "RAZÓN SOCIAL:" seguido de un nombre de empresa, ese nombre ES EL CLIENTE, no el emisor.
+- Si el texto de la cabecera parece ilegible, invertido o con puntos entre letras (ej: ".F.I.C", ".PIRCSNI"), es el membrete del emisor con texto rotado — intenta inferir el nombre del emisor por otros medios (email, pie de página, nombre de archivo).
+- El emisor suele ser quien firma la factura o aparece en el pie de página con datos legales.
+- Fíjate en el dominio del email del comercial para identificar al emisor (ej: si el email es nombre@alpesa.com, el emisor podría ser ALPESA).
+
+REGLAS:
+- "Razón Social Emisor" = nombre de quien emite/cobra
+- "Razón Social Cliente" = nombre de quien recibe/paga
+- "CIF" = NIF/CIF del EMISOR únicamente
+- "Base Imponible", "IVA", "Total" = solo número con 2 decimales, sin € ni texto. Ejemplo: 1234.56
+- "Fecha" = formato DD/MM/YYYY
+- Si un campo no existe escribe exactamente: No encontrado
 - Responde ÚNICAMENTE con el JSON, sin texto antes ni después, sin bloques de código
 
 JSON requerido:
-{{"Razón Social": "...", "CIF": "...", "Número Factura": "...", "Fecha": "...", "Base Imponible": "...", "IVA": "...", "Total": "..."}}
+{{"Razón Social Emisor": "...", "Razón Social Cliente": "...", "CIF": "...", "Número Factura": "...", "Fecha": "...", "Base Imponible": "...", "IVA": "...", "Total": "..."}}
 
 TEXTO DE LA FACTURA:
 {texto[:4000]}"""
@@ -53,7 +64,7 @@ TEXTO DE LA FACTURA:
         if match:
             texto_respuesta = match.group(0)
         datos = json.loads(texto_respuesta)
-        campos = ["Razón Social", "CIF", "Número Factura", "Fecha", "Base Imponible", "IVA", "Total"]
+        campos = ["Razón Social Emisor", "Razón Social Cliente", "CIF", "Número Factura", "Fecha", "Base Imponible", "IVA", "Total"]
         for campo in campos:
             if campo not in datos:
                 datos[campo] = "No encontrado"
@@ -72,13 +83,14 @@ TEXTO DE LA FACTURA:
 
 def extraer_con_regex(texto_crudo):
     datos = {k: "No encontrado" for k in
-             ["Razón Social", "CIF", "Número Factura", "Fecha", "Base Imponible", "IVA", "Total"]}
+             ["Razón Social Emisor", "Razón Social Cliente", "CIF", "Número Factura", "Fecha", "Base Imponible", "IVA", "Total"]}
 
     lineas = [l.strip() for l in texto_crudo.strip().split("\n") if l.strip()]
     texto = " ".join(lineas)
     sep_cliente = r'(?:\n[Ff]actura[:\s]+[A-Z0-9][A-Z0-9\-\/]{2,25}\n|FACTURAR?\s+A\b|FACTURADO\s+A\b)'
     partes = re.split(sep_cliente, texto_crudo, maxsplit=1, flags=re.IGNORECASE)
     texto_emisor = partes[0] if len(partes) > 1 else texto_crudo
+    texto_cliente = partes[1] if len(partes) > 1 else ""
     lineas_emisor = [l.strip() for l in texto_emisor.split("\n") if l.strip()]
 
     razon_encontrada = False
@@ -86,7 +98,7 @@ def extraer_con_regex(texto_crudo):
 
     m = re.search(r'DATOS\s+DEL\s+EMISOR[:\s\n]*([^\n]+)', texto_crudo, re.IGNORECASE)
     if m:
-        datos["Razón Social"] = m.group(1).strip()[:60]
+        datos["Razón Social Emisor"] = m.group(1).strip()[:60]
         razon_encontrada = True
 
     if not razon_encontrada:
@@ -98,7 +110,7 @@ def extraer_con_regex(texto_crudo):
         if m:
             valor = m.group(1).strip().rstrip(".,; \t")
             if len(valor) > 3:
-                datos["Razón Social"] = valor[:60]
+                datos["Razón Social Emisor"] = valor[:60]
                 razon_encontrada = True
 
     if not razon_encontrada:
@@ -108,14 +120,23 @@ def extraer_con_regex(texto_crudo):
             m2 = re.search(SUFIJO, valor, re.IGNORECASE)
             if m2: valor = valor[:m2.end()].strip()
             if len(valor) > 3:
-                datos["Razón Social"] = valor[:60]
+                datos["Razón Social Emisor"] = valor[:60]
                 razon_encontrada = True
 
     if not razon_encontrada:
         ruido = [r'^\d+$', r'^factura$', r'^(?:CIF|NIF|DNI)', r'^AÑO', r'^MES\b', r'^DÍA', r'^DOC', r'^ref\.']
         for linea in lineas_emisor[:10]:
             if not any(re.search(p, linea, re.IGNORECASE) for p in ruido) and len(linea) > 4 and re.search(r'[A-Za-záéíóúñ]{3}', linea):
-                datos["Razón Social"] = linea[:60]
+                datos["Razón Social Emisor"] = linea[:60]
+                break
+
+    # Extraer cliente
+    if texto_cliente:
+        lineas_cli = [l.strip() for l in texto_cliente.split("\n") if l.strip()]
+        ruido = [r'^\d+$', r'^factura$', r'^(?:CIF|NIF|DNI)', r'^AÑO', r'^MES\b', r'^FECHA', r'^TOTAL', r'^BASE']
+        for linea in lineas_cli[:8]:
+            if not any(re.search(p, linea, re.IGNORECASE) for p in ruido) and len(linea) > 4 and re.search(r'[A-Za-záéíóúñ]{3}', linea):
+                datos["Razón Social Cliente"] = linea[:60]
                 break
 
     patrones_cif = [
@@ -139,7 +160,6 @@ def extraer_con_regex(texto_crudo):
 
     for patron in [
         r'N[º°][:\s]+([A-Z0-9][A-Z0-9\-\/]{3,25})\b',
-        r'CONTINUACI[OÓ]N\s*FACTURA\s+([A-Z0-9][A-Z0-9\-\/]{3,25})',
         r'(?:factura\s*n[uú]m(?:ero)?\.?|n[uú]m(?:ero)?\s*(?:de\s*)?factura)[:\s\.\-#]*([A-Z0-9][A-Z0-9\-\/]{2,20})',
         r'[Ff]actura\s+([A-Z][0-9]{4}[A-Z0-9\-\/]{1,15})\b',
         r'\b([A-Z]{1,4}[\/\-]\d{4}[\/\-][A-Z]{2,4}[\/\-]\d{4})\b',
@@ -154,7 +174,6 @@ def extraer_con_regex(texto_crudo):
 
     for patron in [
         r'(?:fecha\s*(?:de\s*)?(?:factura|emisi[oó]n)?)[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})',
-        r'(?:fecha)[:\s]*(\d{1,2}\s+de\s+\w+\s+de\s+\d{4})',
         r'\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})\b',
         r'\b(\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+\d{4})\b',
     ]:
@@ -189,7 +208,7 @@ def extraer_con_regex(texto_crudo):
 def extraer_datos_factura(ruta_archivo):
     texto_crudo = extraer_texto(ruta_archivo)
     if not texto_crudo:
-        return {k: "No encontrado" for k in ["Razón Social","CIF","Número Factura","Fecha","Base Imponible","IVA","Total"]}
+        return {k: "No encontrado" for k in ["Razón Social Emisor","Razón Social Cliente","CIF","Número Factura","Fecha","Base Imponible","IVA","Total"]}
     resultado_ia = extraer_con_ia(texto_crudo)
     if resultado_ia:
         return resultado_ia
@@ -232,7 +251,9 @@ def guardar_en_excel(datos, ruta_excel="resultados.xlsx", excel_base=None):
         hoja.row_dimensions[1].height = 22
 
     fila = hoja.max_row + 1
-    valores = [datos["Razón Social"], datos["CIF"], datos["Número Factura"],
+    # Usar Razón Social Emisor por defecto en el Excel
+    razon_social = datos.get("Razón Social", datos.get("Razón Social Emisor", "No encontrado"))
+    valores = [razon_social, datos["CIF"], datos["Número Factura"],
                datos["Fecha"], datos["Base Imponible"], datos["IVA"], datos["Total"]]
     relleno = verde_claro if fila % 2 == 0 else blanco
 

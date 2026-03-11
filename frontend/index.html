@@ -587,9 +587,23 @@
             ? "Algunos datos no se encontraron. Puedes corregirlos en el editor."
             : "Todos los datos extraídos correctamente.";
 
+          const emisor = d["Razón Social Emisor"] || d["Razón Social"] || "No encontrado";
+          const clienteRS = d["Razón Social Cliente"] || "No encontrado";
+          bloque.dataset.emisor = emisor;
+          bloque.dataset.cliente = clienteRS;
+          bloque.dataset.modo = "emisor";
           bloque.innerHTML = `
             <div class="nombre-archivo">📄 ${item.archivo}</div>
-            <div class="fila-dato"><span class="etiqueta">Razón Social</span><span class="valor">${d["Razón Social"]}</span></div>
+            <div class="fila-dato" style="margin-bottom:4px;">
+              <span class="etiqueta">Razón Social</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="valor razon-social-valor">${emisor}</span>
+                <div style="display:flex;border:1px solid #334155;border-radius:6px;overflow:hidden;font-size:11px;">
+                  <button onclick="toggleRazonSocial(this,'emisor')" style="padding:3px 8px;background:#34d399;color:#0f172a;border:none;cursor:pointer;font-weight:700;">Emisor</button>
+                  <button onclick="toggleRazonSocial(this,'cliente')" style="padding:3px 8px;background:transparent;color:#64748b;border:none;cursor:pointer;">Cliente</button>
+                </div>
+              </div>
+            </div>
             <div class="fila-dato"><span class="etiqueta">CIF</span><span class="valor">${d.CIF}</span></div>
             <div class="fila-dato"><span class="etiqueta">Número Factura</span><span class="valor">${d["Número Factura"]}</span></div>
             <div class="fila-dato"><span class="etiqueta">Fecha</span><span class="valor">${d.Fecha}</span></div>
@@ -675,6 +689,31 @@
       const res = await fetch("/crear-pago", { method: "POST" });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
+    }
+
+    // ── TOGGLE RAZÓN SOCIAL ──────────────────────────────────────
+    function toggleRazonSocial(btn, modo) {
+      const bloque = btn.closest(".bloque-resultado");
+      const valor = modo === "emisor" ? bloque.dataset.emisor : bloque.dataset.cliente;
+      bloque.querySelector(".razon-social-valor").textContent = valor;
+      bloque.dataset.modo = modo;
+      // Actualizar estilos de botones
+      const btns = btn.parentElement.querySelectorAll("button");
+      btns.forEach(b => {
+        b.style.background = "transparent";
+        b.style.color = "#64748b";
+        b.style.fontWeight = "normal";
+      });
+      btn.style.background = "#34d399";
+      btn.style.color = "#0f172a";
+      btn.style.fontWeight = "700";
+      // Actualizar historial
+      const archivo = bloque.querySelector(".nombre-archivo").textContent.replace("📄 ","");
+      const idx = historial.findIndex(h => h._archivo === archivo);
+      if (idx !== -1) {
+        historial[idx]["Razón Social"] = valor;
+        actualizarHistorial();
+      }
     }
 
     // ── EDITOR EXCEL ─────────────────────────────────────────────
