@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FacturaAI — Mi cuenta</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+    .header {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { font-size: 20px; font-weight: 800; color: #f1f5f9; text-decoration: none; }
+    .logo span { color: #34d399; }
+    .btn-back { background: transparent; border: 1px solid #334155; color: #64748b; border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+    .btn-back:hover { border-color: #34d399; color: #34d399; }
+
+    .contenedor {
+      max-width: 620px;
+      margin: 48px auto;
+      padding: 0 24px;
+    }
+
+    .titulo-pagina {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .subtitulo-pagina { color: #64748b; font-size: 14px; margin-bottom: 32px; }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 16px;
+    }
+    .card-titulo {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 18px;
+    }
+
+    .info-fila {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #334155;
+      font-size: 14px;
+    }
+    .info-fila:last-child { border-bottom: none; }
+    .info-label { color: #64748b; }
+    .info-valor { font-weight: 600; color: #e2e8f0; }
+    .info-valor.verde { color: #34d399; }
+
+    .badge-premium {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(52,211,153,0.12);
+      border: 1px solid rgba(52,211,153,0.3);
+      border-radius: 99px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #34d399;
+    }
+    .badge-gratis {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(100,116,139,0.12);
+      border: 1px solid #334155;
+      border-radius: 99px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    .barra-fondo { background: #334155; border-radius: 99px; height: 6px; margin-top: 8px; }
+    .barra-progreso { height: 6px; border-radius: 99px; transition: width 0.4s; }
+
+    .btn-portal {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      background: transparent;
+      border: 1px solid #f87171;
+      border-radius: 10px;
+      color: #f87171;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 4px;
+    }
+    .btn-portal:hover { background: rgba(248,113,113,0.08); }
+
+    .btn-upgrade {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #34d399, #059669);
+      border: none;
+      border-radius: 10px;
+      color: #0f172a;
+      font-size: 14px;
+      font-weight: 800;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 4px;
+      box-shadow: 0 4px 20px rgba(52,211,153,0.2);
+    }
+    .btn-upgrade:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(52,211,153,0.35); }
+
+    .btn-logout-cuenta {
+      display: block;
+      width: 100%;
+      padding: 11px;
+      background: transparent;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-logout-cuenta:hover { border-color: #f87171; color: #f87171; }
+
+    .aviso {
+      background: rgba(251,191,36,0.08);
+      border: 1px solid rgba(251,191,36,0.25);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #fbbf24;
+      margin-top: 16px;
+      display: none;
+    }
+    .aviso.visible { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a href="/" class="logo">Factura<span>AI</span></a>
+    <a href="/" class="btn-back">← Volver a la app</a>
+  </div>
+
+  <div class="contenedor">
+    <div class="titulo-pagina">Mi cuenta</div>
+    <div class="subtitulo-pagina">Gestiona tu suscripción y datos</div>
+
+    <div class="aviso" id="avisoError">
+      ⚠️ No se pudo abrir el portal de Stripe. Escríbenos a <strong>javiercabado@gmail.com</strong> para cancelar.
+    </div>
+
+    <!-- DATOS DE CUENTA -->
+    <div class="card">
+      <div class="card-titulo">Información de cuenta</div>
+      <div class="info-fila">
+        <span class="info-label">Email</span>
+        <span class="info-valor" id="emailUsuario">—</span>
+      </div>
+      <div class="info-fila">
+        <span class="info-label">Plan</span>
+        <span class="info-valor" id="planUsuario">—</span>
+      </div>
+      <div class="info-fila" id="filaFacturas">
+        <span class="info-label">Facturas usadas</span>
+        <div style="text-align:right;">
+          <span class="info-valor verde" id="facturasUsadas">—</span>
+          <div class="barra-fondo" style="width:180px;">
+            <div class="barra-progreso" id="barraUso" style="width:0%;background:#34d399;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUSCRIPCIÓN PREMIUM -->
+    <div class="card" id="cardPremium" style="display:none;">
+      <div class="card-titulo">Suscripción Premium</div>
+      <p style="color:#94a3b8;font-size:13px;line-height:1.7;margin-bottom:20px;">
+        Desde el portal de Stripe puedes ver tu historial de pagos, cambiar el método de pago o cancelar tu suscripción en cualquier momento. La cancelación es efectiva al final del período actual.
+      </p>
+      <a href="/portal-cliente" class="btn-portal">⚙️ Gestionar suscripción en Stripe</a>
+    </div>
+
+    <!-- UPGRADE (solo si no es premium) -->
+    <div class="card" id="cardUpgrade" style="display:none;">
+      <div class="card-titulo">Hazte Premium</div>
+      <p style="color:#94a3b8;font-size:13px;line-height:1.7;margin-bottom:20px;">
+        Desbloquea facturas ilimitadas por solo <strong style="color:#34d399;">10€/mes</strong>. Cancela cuando quieras.
+      </p>
+      <button class="btn-upgrade" onclick="irAPremium()">⚡ Activar Premium · 10€/mes</button>
+    </div>
+
+    <!-- CERRAR SESIÓN -->
+    <div class="card">
+      <div class="card-titulo">Sesión</div>
+      <a href="/logout" class="btn-logout-cuenta">Cerrar sesión</a>
+    </div>
+
+  </div>
+
+  <script>
+    // Detectar error de Stripe en URL
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error")) {
+      document.getElementById("avisoError").classList.add("visible");
+    }
+
+    // Cargar datos del usuario
+    fetch("/cuenta-datos")
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { window.location.href = "/login"; return; }
+
+        document.getElementById("emailUsuario").textContent = data.email;
+
+        if (data.es_premium) {
+          document.getElementById("planUsuario").innerHTML = '<span class="badge-premium">⚡ Premium · Activo</span>';
+          document.getElementById("filaFacturas").style.display = "none";
+          document.getElementById("cardPremium").style.display = "block";
+        } else {
+          document.getElementById("planUsuario").innerHTML = '<span class="badge-gratis">Gratis</span>';
+          const usadas = data.facturas_usadas;
+          const limite = 30;
+          const pct = Math.min((usadas / limite) * 100, 100);
+          document.getElementById("facturasUsadas").textContent = `${usadas} / ${limite}`;
+          const barra = document.getElementById("barraUso");
+          barra.style.width = pct + "%";
+          if (pct < 60) barra.style.background = "#34d399";
+          else if (pct < 85) barra.style.background = "#f59e0b";
+          else barra.style.background = "#f87171";
+          document.getElementById("cardUpgrade").style.display = "block";
+        }
+      });
+
+    async function irAPremium() {
+      const res = await fetch("/crear-pago", { method: "POST" });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    }
+  </script>
+</body>
+</html>

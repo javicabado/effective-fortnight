@@ -323,15 +323,19 @@
 
   <!-- HEADER -->
   <div class="header">
-    <div class="logo">Factura<span>AI</span></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="logo">Factura<span>AI</span></div>
+      <span style="background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:0.5px;">⚠ BETA · Puede haber errores</span>
+    </div>
     <div class="header-centro">
       <div class="contador-wrap">
         <div class="texto-contador" id="textoContador">Cargando...</div>
         <div class="barra-fondo"><div class="barra-progreso" id="barraProgreso"></div></div>
       </div>
       <button id="btnPremium" onclick="abrirModal()" style="background:linear-gradient(135deg,#34d399,#059669);color:#0f172a;border:none;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;display:none;box-shadow:0 0 12px rgba(52,211,153,0.4);">⚡ Hazte Premium · 10€/mes</button>
+      <a href="/cuenta" style="background:transparent;color:#64748b;border:1px solid #334155;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:0.5px;" onmouseover="this.style.color='#34d399';this.style.borderColor='#34d399'" onmouseout="this.style.color='#64748b';this.style.borderColor='#334155'">👤 Mi cuenta</a>
       <a href="/#contacto" style="background:transparent;color:#64748b;border:1px solid #334155;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:0.5px;" onmouseover="this.style.color='#34d399';this.style.borderColor='#34d399'" onmouseout="this.style.color='#64748b';this.style.borderColor='#334155'">✉ Contacto</a>
-      <span style="background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:0.5px;">⚠ BETA · Puede haber errores</span>
+
     </div>
     <div class="header-derecha">
       <span id="emailUsuario" style="font-size:12px;color:#64748b;"></span>
@@ -364,6 +368,9 @@
       <div class="panel" id="panelResultados" style="margin-top:20px;display:none;">
         <div class="panel-titulo">✅ Resultados
           <button onclick="cambiarTab('excel')" style="background:#1e3a5f;color:#93c5fd;border:1px solid #93c5fd;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;">📊 Mi Excel →</button>
+        </div>
+        <div style="margin-bottom:12px;">
+          <input type="text" id="buscadorResultados" oninput="filtrarResultados()" placeholder="🔍 Buscar por razón social, CIF o número de factura..." style="width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:9px 14px;color:#f1f5f9;font-size:13px;outline:none;" onfocus="this.style.borderColor='#34d399'" onblur="this.style.borderColor='#334155'">
         </div>
         <div id="contenidoResultados"></div>
         <a class="boton-excel" href="/descargar" style="margin-top:14px;">⬇️ Descargar Excel completo</a>
@@ -463,6 +470,24 @@
     const boton     = document.getElementById("botonExtraer");
     const estado    = document.getElementById("estado");
     const chips     = document.getElementById("listaChips");
+    function filtrarResultados() {
+      const q = document.getElementById("buscadorResultados").value.toLowerCase();
+      const tbody = document.getElementById("tbodyResultados");
+      if (!tbody) return;
+      const filas = tbody.querySelectorAll("tr.fila-compacta");
+      filas.forEach(tr => {
+        const texto = tr.textContent.toLowerCase();
+        const visible = texto.includes(q);
+        tr.style.display = visible ? "" : "none";
+        // también ocultar la fila de detalle asociada
+        const detalleId = tr.dataset.detalleId;
+        if (detalleId) {
+          const detalle = document.getElementById(detalleId);
+          if (detalle) detalle.style.display = visible ? "" : "none";
+        }
+      });
+    }
+
     const panelRes  = document.getElementById("panelResultados");
     const contenido = document.getElementById("contenidoResultados");
     const filasHist = null;
@@ -600,7 +625,8 @@
         const trId = "fila-" + Date.now() + "-" + idx;
         if (item.error) {
           const tr = document.createElement("tr");
-          tr.className = "fila-compacta";
+          tr.className = "fila-compacta fila-resumen";
+          tr.dataset.idx = i;
           tr.innerHTML = `<td colspan="10" style="color:#f87171;padding:8px 10px;">⚠️ ${item.archivo} — ${item.error}</td>`;
           tbody.appendChild(tr);
           return;

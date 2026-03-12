@@ -207,29 +207,18 @@ def crear_pago():
     if "usuario_id" not in session:
         return jsonify({"error": "Debes iniciar sesión"}), 401
 
-    # 1. Leemos el Precio ID en el momento exacto para evitar variables vacías
-    precio_id = os.environ.get("STRIPE_PRICE_ID")
-    
-    if not stripe.api_key or not precio_id:
-        return jsonify({"error": "Faltan claves de Stripe en el servidor"}), 500
+    if not stripe.api_key:
+        return jsonify({"error": "Stripe no configurado"}), 500
 
     usuario = Usuario.query.get(session["usuario_id"])
 
-    # 2. Obtenemos la URL de origen de forma fiable
-    # request.headers.get("Origin") lee la dirección exacta desde el navegador del usuario
-    base_url = request.headers.get("Origin") 
-    
-    if not base_url:
-        base_url = request.host_url.rstrip("/")
-        # Si falla el Origin, forzamos el HTTPS manualmente en producción
-        if "onrender.com" in base_url and base_url.startswith("http://"):
-            base_url = base_url.replace("http://", "https://")
+    # URL dinámica: funciona en local Y en producción automáticamente
+    base_url = request.host_url.rstrip("/")
 
-    # 3. Creamos la sesión en Stripe
     checkout = stripe.checkout.Session.create(
         payment_method_types=["card"],
         mode="subscription",
-        line_items=[{"price": precio_id, "quantity": 1}],
+        line_items=[{"price": STRIPE_PRICE_ID, "quantity": 1}],
         customer_email=usuario.email,
         success_url=f"{base_url}/pago-exitoso?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{base_url}/",
@@ -252,6 +241,46 @@ def pago_exitoso():
 @app.route("/stripe-pk")
 def stripe_pk():
     return jsonify({"pk": STRIPE_PK})
+
+
+# ── CUENTA ────────────────────────────────────────────
+@app.route("/cuenta")
+def cuenta():
+    if "usuario_id" not in session:
+        return redirect("/login")
+    return send_from_directory(".", "cuenta.html")
+
+@app.route("/cuenta-datos")
+def cuenta_datos():
+    if "usuario_id" not in session:
+        return jsonify({"error": "No autenticado"}), 401
+    usuario = Usuario.query.get(session["usuario_id"])
+    return jsonify({
+        "email": usuario.email,
+        "es_premium": usuario.es_premium,
+        "facturas_usadas": usuario.facturas_usadas
+    })
+
+@app.route("/portal-cliente")
+def portal_cliente():
+    if "usuario_id" not in session:
+        return redirect("/login")
+    usuario = Usuario.query.get(session["usuario_id"])
+    try:
+        clientes = stripe.Customer.list(email=usuario.email, limit=1)
+        if not clientes.data:
+            return redirect("/cuenta?error=no_cliente")
+        customer_id = clientes.data[0].id
+        base_url = request.headers.get("Origin") or request.host_url.rstrip("/")
+        if "onrender.com" in base_url and base_url.startswith("http://"):
+            base_url = base_url.replace("http://", "https://")
+        portal = stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url=f"{base_url}/cuenta"
+        )
+        return redirect(portal.url)
+    except Exception as e:
+        return redirect("/cuenta?error=portal")
 
 @app.route("/leer-excel", methods=["POST"])
 def leer_excel():
@@ -336,10 +365,6 @@ def test_ocr():
     from extractor import extraer_texto
     texto = extraer_texto(ruta)
     return jsonify({"texto": texto})
-
-@app.route("/favicon.ico")
-def favicon():
-    return send_from_directory(".", "favicon.ico")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

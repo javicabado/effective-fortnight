@@ -91,13 +91,27 @@
 
     .estado { text-align: center; font-size: 13px; color: #94a3b8; margin-top: 10px; min-height: 20px; }
 
-    /* RESULTADOS */
-    .bloque-resultado { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
-    .nombre-archivo { font-weight: 700; font-size: 14px; color: #34d399; margin-bottom: 12px; }
-    .fila-dato { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
+    /* RESULTADOS - TABLA COMPACTA */
+    .tabla-resultados { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 14px; }
+    .tabla-resultados thead tr { background: #0f172a; }
+    .tabla-resultados th { padding: 8px 10px; color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; border-bottom: 1px solid #334155; white-space: nowrap; }
+    .tabla-resultados .fila-compacta td { padding: 7px 10px; border-bottom: 1px solid #1e293b; vertical-align: middle; cursor: pointer; transition: background 0.15s; }
+    .tabla-resultados .fila-compacta:hover td { background: rgba(52,211,153,0.04); }
+    .tabla-resultados .fila-compacta td.archivo-td { color: #94a3b8; font-size: 11px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tabla-resultados .fila-compacta td.rs-td { font-weight: 600; color: #e2e8f0; }
+    .tabla-resultados .fila-compacta td.num-td { color: #e2e8f0; font-weight: 600; }
+    .tabla-resultados .fila-compacta td.total-td { color: #34d399; font-weight: 700; }
+    .tabla-resultados .fila-compacta td.estado-td { text-align: center; }
+    .tabla-resultados .fila-compacta td.expand-td { text-align: center; color: #475569; font-size: 10px; width: 24px; }
+    .fila-detalle td { padding: 0 !important; border-bottom: 1px solid #334155 !important; }
+    .fila-detalle .detalle-inner { padding: 14px 16px; background: #0a1628; display: none; }
+    .fila-detalle.abierto .detalle-inner { display: block; }
+    .fila-dato { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #1e293b; font-size: 12px; }
     .fila-dato:last-of-type { border-bottom: none; }
     .etiqueta { color: #64748b; }
     .valor { font-weight: 600; color: #e2e8f0; }
+    .nombre-archivo { font-weight: 700; font-size: 13px; color: #34d399; margin-bottom: 10px; }
+    .bloque-resultado { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
 
     .boton-excel { display: block; width: 100%; background: #064e3b; color: #34d399; border: 1px solid #34d399; border-radius: 10px; padding: 12px; text-align: center; text-decoration: none; font-weight: 700; font-size: 14px; margin-top: 14px; transition: all 0.2s; }
     .boton-excel:hover { background: #065f46; }
@@ -298,25 +312,30 @@
     #panelExcel { grid-column: 1 / -1; }
     .editor-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
     .editor-btns button { padding: 8px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; border: none; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: #1e293b; padding: 10px 14px; color: #94a3b8; font-size: 11px; text-transform: uppercase; text-align: center; border: 1px solid #334155; }
-    td { padding: 6px; border: 1px solid #334155; text-align: center; }
-    td input { background: transparent; border: none; color: #e2e8f0; text-align: center; width: 100%; outline: none; font-size: 13px; }
-    tr:nth-child(even) td { background: #1e293b; }
+    #tablaEditorContainer table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    #tablaEditorContainer th { background: #1e293b; padding: 10px 14px; color: #94a3b8; font-size: 11px; text-transform: uppercase; text-align: center; border: 1px solid #334155; }
+    #tablaEditorContainer td { padding: 6px; border: 1px solid #334155; text-align: center; }
+    #tablaEditorContainer td input { background: transparent; border: none; color: #e2e8f0; text-align: center; width: 100%; outline: none; font-size: 13px; }
+    #tablaEditorContainer tr:nth-child(even) td { background: #1e293b; }
   </style>
 </head>
 <body>
 
   <!-- HEADER -->
   <div class="header">
-    <div class="logo">Factura<span>AI</span></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="logo">Factura<span>AI</span></div>
+      <span style="background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:0.5px;">⚠ BETA · Puede haber errores</span>
+    </div>
     <div class="header-centro">
       <div class="contador-wrap">
         <div class="texto-contador" id="textoContador">Cargando...</div>
         <div class="barra-fondo"><div class="barra-progreso" id="barraProgreso"></div></div>
       </div>
       <button id="btnPremium" onclick="abrirModal()" style="background:linear-gradient(135deg,#34d399,#059669);color:#0f172a;border:none;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;display:none;box-shadow:0 0 12px rgba(52,211,153,0.4);">⚡ Hazte Premium · 10€/mes</button>
-      <span style="background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:0.5px;">⚠ BETA · Puede haber errores</span>
+      <a href="/cuenta" style="background:transparent;color:#64748b;border:1px solid #334155;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:0.5px;" onmouseover="this.style.color='#34d399';this.style.borderColor='#34d399'" onmouseout="this.style.color='#64748b';this.style.borderColor='#334155'">👤 Mi cuenta</a>
+      <a href="/#contacto" style="background:transparent;color:#64748b;border:1px solid #334155;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:0.5px;" onmouseover="this.style.color='#34d399';this.style.borderColor='#34d399'" onmouseout="this.style.color='#64748b';this.style.borderColor='#334155'">✉ Contacto</a>
+
     </div>
     <div class="header-derecha">
       <span id="emailUsuario" style="font-size:12px;color:#64748b;"></span>
@@ -332,7 +351,7 @@
 
   <!-- PESTAÑA 1: SUBIR FACTURAS -->
   <div class="contenedor" id="panelFacturas">
-    <div>
+    <div style="grid-column:1/-1;">
       <div class="panel">
         <div class="panel-titulo">📤 Subir facturas</div>
         <div class="zona-subida" id="zonaSubida">
@@ -347,21 +366,14 @@
       </div>
 
       <div class="panel" id="panelResultados" style="margin-top:20px;display:none;">
-        <div class="panel-titulo">✅ Resultados</div>
+        <div class="panel-titulo">✅ Resultados
+          <button onclick="cambiarTab('excel')" style="background:#1e3a5f;color:#93c5fd;border:1px solid #93c5fd;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;">📊 Mi Excel →</button>
+        </div>
+        <div style="margin-bottom:12px;">
+          <input type="text" id="buscadorResultados" oninput="filtrarResultados()" placeholder="🔍 Buscar por razón social, CIF o número de factura..." style="width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:9px 14px;color:#f1f5f9;font-size:13px;outline:none;" onfocus="this.style.borderColor='#34d399'" onblur="this.style.borderColor='#334155'">
+        </div>
         <div id="contenidoResultados"></div>
-        <a class="boton-excel" href="/descargar">⬇️ Descargar Excel completo</a>
-      </div>
-    </div>
-
-    <div>
-      <div class="panel">
-        <div class="panel-titulo">🕓 Historial de sesión
-          <button class="btn-limpiar" id="btnLimpiar">Limpiar</button>
-        </div>
-        <div id="historial">
-          <div class="historial-vacio" id="historialVacio">Aún no has procesado ninguna factura</div>
-          <div id="filasHistorial"></div>
-        </div>
+        <a class="boton-excel" href="/descargar" style="margin-top:14px;">⬇️ Descargar Excel completo</a>
       </div>
     </div>
   </div>
@@ -394,7 +406,7 @@
         <div class="modal-titulo">Extrae facturas sin<br><span>límites</span></div>
         <div class="modal-subtitulo">Sin restricciones, sin interrupciones. Todo por menos de un café al mes.</div>
         <div class="modal-precio">
-          <div class="precio-numero">5</div>
+          <div class="precio-numero">10</div>
           <div class="precio-detalle">
             <span class="precio-moneda">€</span>
             <span class="precio-periodo">/ mes · cancela cuando quieras</span>
@@ -458,10 +470,28 @@
     const boton     = document.getElementById("botonExtraer");
     const estado    = document.getElementById("estado");
     const chips     = document.getElementById("listaChips");
+    function filtrarResultados() {
+      const q = document.getElementById("buscadorResultados").value.toLowerCase();
+      const tbody = document.getElementById("tbodyResultados");
+      if (!tbody) return;
+      const filas = tbody.querySelectorAll("tr.fila-compacta");
+      filas.forEach(tr => {
+        const texto = tr.textContent.toLowerCase();
+        const visible = texto.includes(q);
+        tr.style.display = visible ? "" : "none";
+        // también ocultar la fila de detalle asociada
+        const detalleId = tr.dataset.detalleId;
+        if (detalleId) {
+          const detalle = document.getElementById(detalleId);
+          if (detalle) detalle.style.display = visible ? "" : "none";
+        }
+      });
+    }
+
     const panelRes  = document.getElementById("panelResultados");
     const contenido = document.getElementById("contenidoResultados");
-    const filasHist = document.getElementById("filasHistorial");
-    const histVacio = document.getElementById("historialVacio");
+    const filasHist = null;
+    const histVacio = null;
     const btnLimpiar = document.getElementById("btnLimpiar");
     let historial = [];
 
@@ -570,58 +600,100 @@
         return;
       }
 
-      data.resultados.forEach(item => {
-        const bloque = document.createElement("div");
-        bloque.className = "bloque-resultado";
+      // Crear tabla compacta
+      let tabla = contenido.querySelector(".tabla-resultados");
+      if (!tabla) {
+        tabla = document.createElement("table");
+        tabla.className = "tabla-resultados";
+        tabla.innerHTML = `<thead><tr>
+          <th></th>
+          <th>Archivo</th>
+          <th>Razón Social</th>
+          <th>CIF</th>
+          <th>Nº Factura</th>
+          <th>Fecha</th>
+          <th>Base Imp.</th>
+          <th>IVA</th>
+          <th>Total</th>
+          <th></th>
+        </tr></thead><tbody id="tbodyResultados"></tbody>`;
+        contenido.appendChild(tabla);
+      }
+      const tbody = tabla.querySelector("#tbodyResultados");
 
+      data.resultados.forEach((item, idx) => {
+        const trId = "fila-" + Date.now() + "-" + idx;
         if (item.error) {
-          bloque.innerHTML = `
-            <div class="nombre-archivo">⚠️ ${item.archivo}</div>
-            <div style="color:#f87171;font-size:13px">${item.error}</div>`;
-        } else {
-          const d = item.datos;
-          const hayNoEncontrado = Object.values(d).some(v => v === "No encontrado");
-          const colorAviso = hayNoEncontrado ? "#f87171" : "#34d399";
-          const iconoAviso = hayNoEncontrado ? "⚠️" : "✅";
-          const textoAviso = hayNoEncontrado
-            ? "Algunos datos no se encontraron. Puedes corregirlos en el editor."
-            : "Todos los datos extraídos correctamente.";
+          const tr = document.createElement("tr");
+          tr.className = "fila-compacta fila-resumen";
+          tr.dataset.idx = i;
+          tr.innerHTML = `<td colspan="10" style="color:#f87171;padding:8px 10px;">⚠️ ${item.archivo} — ${item.error}</td>`;
+          tbody.appendChild(tr);
+          return;
+        }
 
-          const emisor = d["Razón Social Emisor"] || d["Razón Social"] || "No encontrado";
-          const clienteRS = d["Razón Social Cliente"] || "No encontrado";
-          bloque.dataset.emisor = emisor;
-          bloque.dataset.cliente = clienteRS;
-          bloque.dataset.modo = "emisor";
-          bloque.innerHTML = `
-            <div class="nombre-archivo">📄 ${item.archivo}</div>
-            <div class="fila-dato" style="margin-bottom:4px;">
-              <span class="etiqueta">Razón Social</span>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span class="valor razon-social-valor">${emisor}</span>
-                <div style="display:flex;border:1px solid #334155;border-radius:6px;overflow:hidden;font-size:11px;">
-                  <button onclick="toggleRazonSocial(this,'emisor')" style="padding:3px 8px;background:#34d399;color:#0f172a;border:none;cursor:pointer;font-weight:700;">Emisor</button>
-                  <button onclick="toggleRazonSocial(this,'cliente')" style="padding:3px 8px;background:transparent;color:#64748b;border:none;cursor:pointer;">Cliente</button>
-                </div>
+        const d = item.datos;
+        const hayNoEncontrado = Object.values(d).some(v => v === "No encontrado");
+        const emisor = d["Razón Social Emisor"] || d["Razón Social"] || "No encontrado";
+        const clienteRS = d["Razón Social Cliente"] || "No encontrado";
+        const icono = hayNoEncontrado ? "⚠️" : "✅";
+
+        // Fila compacta
+        const trCompacta = document.createElement("tr");
+        trCompacta.className = "fila-compacta";
+        trCompacta.dataset.emisor = emisor;
+        trCompacta.dataset.cliente = clienteRS;
+        trCompacta.dataset.modo = "emisor";
+        trCompacta.dataset.detalleId = trId;
+        trCompacta.innerHTML = `
+          <td class="estado-td">${icono}</td>
+          <td class="archivo-td" title="${item.archivo}">📄 ${item.archivo}</td>
+          <td class="rs-td">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="razon-social-valor">${emisor}</span>
+              <div style="display:flex;border:1px solid #334155;border-radius:5px;overflow:hidden;font-size:10px;flex-shrink:0;">
+                <button onclick="toggleRazonSocial(this,'emisor')" style="padding:2px 6px;background:#34d399;color:#0f172a;border:none;cursor:pointer;font-weight:700;">E</button>
+                <button onclick="toggleRazonSocial(this,'cliente')" style="padding:2px 6px;background:transparent;color:#64748b;border:none;cursor:pointer;">C</button>
               </div>
             </div>
-            <div class="fila-dato"><span class="etiqueta">CIF</span><span class="valor">${d.CIF}</span></div>
-            <div class="fila-dato"><span class="etiqueta">Número Factura</span><span class="valor">${d["Número Factura"]}</span></div>
-            <div class="fila-dato"><span class="etiqueta">Fecha</span><span class="valor">${d.Fecha}</span></div>
-            <div class="fila-dato"><span class="etiqueta">Base Imponible</span><span class="valor">${d["Base Imponible"]}</span></div>
-            <div class="fila-dato"><span class="etiqueta">IVA</span><span class="valor">${d.IVA}</span></div>
-            <div class="fila-dato"><span class="etiqueta">Total</span><span class="valor">${d.Total}</span></div>
-            <div style="margin-top:12px;padding:10px 14px;border-radius:8px;background:${hayNoEncontrado ? 'rgba(248,113,113,0.1)' : 'rgba(52,211,153,0.1)'};border:1px solid ${colorAviso};color:${colorAviso};font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-              <span>${iconoAviso} ${textoAviso}</span>
-              <button id="btnIrExcel" style="background:${colorAviso};color:#0f172a;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">${hayNoEncontrado ? 'Editar Excel →' : 'Ver Excel →'}</button>
-            </div>`;
+          </td>
+          <td class="num-td">${d.CIF}</td>
+          <td class="num-td">${d["Número Factura"]}</td>
+          <td class="num-td">${d.Fecha}</td>
+          <td class="num-td">${d["Base Imponible"]}</td>
+          <td class="num-td">${d.IVA}</td>
+          <td class="total-td">${d.Total}</td>
+          <td class="expand-td">▼</td>`;
 
-          historial.push({...d, _archivo: item.archivo});
-        }
-        contenido.appendChild(bloque);
-      });
+        // Fila detalle (oculta por defecto)
+        const trDetalle = document.createElement("tr");
+        trDetalle.className = "fila-detalle";
+        trDetalle.id = trId;
+        trDetalle.innerHTML = `<td colspan="10"><div class="detalle-inner">
+          <div class="nombre-archivo">📄 ${item.archivo}</div>
+          <div class="fila-dato"><span class="etiqueta">Razón Social Emisor</span><span class="valor">${emisor}</span></div>
+          <div class="fila-dato"><span class="etiqueta">Razón Social Cliente</span><span class="valor">${clienteRS}</span></div>
+          <div class="fila-dato"><span class="etiqueta">CIF</span><span class="valor">${d.CIF}</span></div>
+          <div class="fila-dato"><span class="etiqueta">Número Factura</span><span class="valor">${d["Número Factura"]}</span></div>
+          <div class="fila-dato"><span class="etiqueta">Fecha</span><span class="valor">${d.Fecha}</span></div>
+          <div class="fila-dato"><span class="etiqueta">Base Imponible</span><span class="valor">${d["Base Imponible"]}</span></div>
+          <div class="fila-dato"><span class="etiqueta">IVA</span><span class="valor">${d.IVA}</span></div>
+          <div class="fila-dato"><span class="etiqueta">Total</span><span class="valor">${d.Total}</span></div>
+          ${hayNoEncontrado ? '<div style="margin-top:8px;color:#f87171;font-size:11px;">⚠️ Algunos datos no encontrados. Corrígelos en el editor.</div>' : ''}
+          <button onclick="cambiarTab(\'excel\')" style="margin-top:10px;background:#34d399;color:#0f172a;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">Ver Excel →</button>
+        </div></td>`;
 
-      document.querySelectorAll("#btnIrExcel").forEach(btn => {
-        btn.addEventListener("click", () => cambiarTab("excel"));
+        // Toggle al hacer clic en la fila
+        trCompacta.addEventListener("click", (e) => {
+          if (e.target.tagName === "BUTTON") return;
+          const abierto = trDetalle.classList.contains("abierto");
+          trDetalle.classList.toggle("abierto", !abierto);
+          trCompacta.querySelector(".expand-td").textContent = abierto ? "▼" : "▲";
+        });
+
+        tbody.appendChild(trCompacta);
+        tbody.appendChild(trDetalle);
+        historial.push({...d, _archivo: item.archivo});
       });
 
       actualizarHistorial();
@@ -632,35 +704,7 @@
     });
 
     // ── HISTORIAL ────────────────────────────────────────────────
-    function actualizarHistorial() {
-      if (!historial.length) {
-        histVacio.style.display = "block";
-        filasHist.innerHTML = "";
-        return;
-      }
-      histVacio.style.display = "none";
-      filasHist.innerHTML = `
-        <div class="fila-historial cabecera">
-          <span>Archivo</span><span>CIF</span><span>Fecha</span><span>Base Imp.</span><span>IVA</span><span>Total</span>
-        </div>`;
-      historial.slice().reverse().forEach(item => {
-        const fila = document.createElement("div");
-        fila.className = "fila-historial dato";
-        fila.innerHTML = `
-          <span style="font-size:11px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item._archivo || "—"}</span>
-          <span><span class="cif-badge">${item.CIF}</span></span>
-          <span>${item.Fecha || "—"}</span>
-          <span>${item["Base Imponible"]}</span>
-          <span>${item.IVA}</span>
-          <span>${item.Total}</span>`;
-        filasHist.appendChild(fila);
-      });
-    }
-
-    btnLimpiar.addEventListener("click", () => {
-      historial = [];
-      actualizarHistorial();
-    });
+    function actualizarHistorial() {}
 
     // ── TABS ─────────────────────────────────────────────────────
     function cambiarTab(tab) {
@@ -693,27 +737,19 @@
 
     // ── TOGGLE RAZÓN SOCIAL ──────────────────────────────────────
     function toggleRazonSocial(btn, modo) {
-      const bloque = btn.closest(".bloque-resultado");
-      const valor = modo === "emisor" ? bloque.dataset.emisor : bloque.dataset.cliente;
-      bloque.querySelector(".razon-social-valor").textContent = valor;
-      bloque.dataset.modo = modo;
-      // Actualizar estilos de botones
+      const fila = btn.closest(".fila-compacta");
+      const valor = modo === "emisor" ? fila.dataset.emisor : fila.dataset.cliente;
+      fila.querySelector(".razon-social-valor").textContent = valor;
+      fila.dataset.modo = modo;
       const btns = btn.parentElement.querySelectorAll("button");
-      btns.forEach(b => {
-        b.style.background = "transparent";
-        b.style.color = "#64748b";
-        b.style.fontWeight = "normal";
-      });
+      btns.forEach(b => { b.style.background = "transparent"; b.style.color = "#64748b"; b.style.fontWeight = "normal"; });
       btn.style.background = "#34d399";
       btn.style.color = "#0f172a";
       btn.style.fontWeight = "700";
-      // Actualizar historial
-      const archivo = bloque.querySelector(".nombre-archivo").textContent.replace("📄 ","");
+      const archivoTd = fila.querySelector(".archivo-td");
+      const archivo = archivoTd ? archivoTd.title : "";
       const idx = historial.findIndex(h => h._archivo === archivo);
-      if (idx !== -1) {
-        historial[idx]["Razón Social"] = valor;
-        actualizarHistorial();
-      }
+      if (idx !== -1) { historial[idx]["Razón Social"] = valor; actualizarHistorial(); }
     }
 
     // ── EDITOR EXCEL ─────────────────────────────────────────────
