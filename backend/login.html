@@ -7,121 +7,21 @@
   <title>FacturaAI — Iniciar sesión</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f172a;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .card {
-      background: #1e293b;
-      border-radius: 16px;
-      padding: 40px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
-    }
-
-    .logo {
-      font-size: 24px;
-      font-weight: 800;
-      color: #f1f5f9;
-      margin-bottom: 6px;
-    }
-
+    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: #1e293b; border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.4); }
+    .logo { font-size: 24px; font-weight: 800; color: #f1f5f9; margin-bottom: 6px; }
     .logo span { color: #34d399; }
-
-    .subtitulo {
-      color: #94a3b8;
-      font-size: 14px;
-      margin-bottom: 32px;
-    }
-
-    label {
-      display: block;
-      color: #94a3b8;
-      font-size: 13px;
-      margin-bottom: 6px;
-    }
-
-    input {
-      width: 100%;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 12px 14px;
-      color: #f1f5f9;
-      font-size: 14px;
-      margin-bottom: 18px;
-      outline: none;
-      transition: border 0.2s;
-    }
-
+    .subtitulo { color: #94a3b8; font-size: 14px; margin-bottom: 32px; }
+    label { display: block; color: #94a3b8; font-size: 13px; margin-bottom: 6px; }
+    input { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px 14px; color: #f1f5f9; font-size: 14px; margin-bottom: 18px; outline: none; transition: border 0.2s; }
     input:focus { border-color: #34d399; }
-
-    .boton {
-      width: 100%;
-      background: #34d399;
-      color: #0f172a;
-      font-weight: 700;
-      font-size: 15px;
-      border: none;
-      border-radius: 8px;
-      padding: 13px;
-      cursor: pointer;
-      transition: background 0.2s;
-      margin-bottom: 16px;
-    }
-
+    .boton { width: 100%; background: #34d399; color: #0f172a; font-weight: 700; font-size: 15px; border: none; border-radius: 8px; padding: 13px; cursor: pointer; transition: background 0.2s; margin-bottom: 16px; }
     .boton:hover { background: #10b981; }
-
-    .boton-invitado {
-      width: 100%;
-      background: transparent;
-      color: #94a3b8;
-      font-size: 14px;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 11px;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-bottom: 16px;
-      text-decoration: none;
-      display: block;
-      text-align: center;
-    }
-
-    .boton-invitado:hover {
-      border-color: #94a3b8;
-      color: #f1f5f9;
-    }
-
-    .enlace {
-      text-align: center;
-      color: #64748b;
-      font-size: 13px;
-    }
-
-    .enlace a {
-      color: #34d399;
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .error {
-      background: #7f1d1d;
-      color: #fca5a5;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 13px;
-      margin-bottom: 16px;
-      display: none;
-    }
+    .boton-invitado { width: 100%; background: transparent; color: #94a3b8; font-size: 14px; border: 1px solid #334155; border-radius: 8px; padding: 11px; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; text-decoration: none; display: block; text-align: center; }
+    .boton-invitado:hover { border-color: #94a3b8; color: #f1f5f9; }
+    .enlace { text-align: center; color: #64748b; font-size: 13px; }
+    .enlace a { color: #34d399; text-decoration: none; font-weight: 600; }
+    .error { background: #7f1d1d; color: #fca5a5; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; display: none; }
   </style>
 </head>
 <body>
@@ -147,32 +47,28 @@
   </div>
 
   <script>
-    document.getElementById("boton").addEventListener("click", async () => {
+    async function login() {
       const email    = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
       const errorDiv = document.getElementById("error");
-
       if (!email || !password) {
         errorDiv.textContent = "Por favor rellena todos los campos";
         errorDiv.style.display = "block";
         return;
       }
-
       const res = await fetch("/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, contraseña: password })
       });
-
       const data = await res.json();
+      if (data.ok) { window.location.href = "/"; }
+      else { errorDiv.textContent = data.error; errorDiv.style.display = "block"; }
+    }
 
-      if (data.ok) {
-        window.location.href = "/";
-      } else {
-        errorDiv.textContent = data.error;
-        errorDiv.style.display = "block";
-      }
-    });
+    document.getElementById("boton").addEventListener("click", login);
+    document.getElementById("email").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("password").focus(); });
+    document.getElementById("password").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
   </script>
 </body>
 </html>
