@@ -7,6 +7,8 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 
+EXTENSIONES_IMAGEN = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff", ".tif"}
+
 def extraer_texto(ruta_archivo):
     extension = os.path.splitext(ruta_archivo)[1].lower()
     if extension == ".pdf":
@@ -16,6 +18,65 @@ def extraer_texto(ruta_archivo):
                 texto += pagina.extract_text() or ""
         return texto
     return ""
+
+def extraer_datos_imagen(ruta_archivo):
+    """Usa el modelo de visión de Groq para extraer datos directamente de una imagen."""
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return None
+    try:
+        import base64
+        from groq import Groq
+        with open(ruta_archivo, "rb") as f:
+            imagen_b64 = base64.b64encode(f.read()).decode("utf-8")
+        extension = os.path.splitext(ruta_archivo)[1].lower().lstrip(".")
+        media_type_map = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
+                          "webp": "image/webp", "bmp": "image/bmp", "tiff": "image/tiff", "tif": "image/tiff"}
+        media_type = media_type_map.get(extension, "image/jpeg")
+        cliente = Groq(api_key=api_key)
+        prompt = """Eres un experto en contabilidad española. Analiza esta imagen de una factura y extrae exactamente estos 8 campos.
+
+DEFINICIONES:
+- EMISOR = empresa que emite/cobra la factura (aparece en cabecera/membrete)
+- CLIENTE = empresa que recibe/paga (aparece tras etiquetas como "RAZÓN SOCIAL:", "Cliente:", "Facturar a:")
+
+REGLAS:
+- "Base Imponible", "IVA", "Total" = solo número con 2 decimales, sin € ni texto. Ejemplo: 1234.56
+- "Fecha" = formato DD/MM/YYYY
+- Si un campo no existe escribe exactamente: No encontrado
+- Responde ÚNICAMENTE con el JSON, sin texto antes ni después
+
+JSON requerido:
+{"Razón Social Emisor": "...", "Razón Social Cliente": "...", "CIF": "...", "Número Factura": "...", "Fecha": "...", "Base Imponible": "...", "IVA": "...", "Total": "..."}"""
+        respuesta = cliente.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=[{"role": "user", "content": [
+                {"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{imagen_b64}"}},
+                {"type": "text", "text": prompt}
+            ]}],
+            temperature=0,
+            max_tokens=500,
+        )
+        texto_respuesta = respuesta.choices[0].message.content.strip()
+        texto_respuesta = re.sub(r'^```(?:json)?\s*', '', texto_respuesta)
+        texto_respuesta = re.sub(r'\s*```$', '', texto_respuesta)
+        match = re.search(r'\{.*\}', texto_respuesta, re.DOTALL)
+        if match:
+            texto_respuesta = match.group(0)
+        datos = json.loads(texto_respuesta)
+        campos = ["Razón Social Emisor", "Razón Social Cliente", "CIF", "Número Factura", "Fecha", "Base Imponible", "IVA", "Total"]
+        for campo in campos:
+            if campo not in datos:
+                datos[campo] = "No encontrado"
+        for campo in ["Base Imponible", "IVA", "Total"]:
+            valor = str(datos.get(campo, "No encontrado")).strip()
+            if valor and valor != "No encontrado":
+                valor = valor.replace(",", ".").replace("€", "").replace("EUR", "").strip()
+                if re.match(r'^\d+(\.\d{1,2})?$', valor):
+                    datos[campo] = valor + " EUR"
+        return datos
+    except Exception as e:
+        return None
 
 
 def extraer_con_ia(texto):
@@ -206,6 +267,14 @@ def extraer_con_regex(texto_crudo):
 
 
 def extraer_datos_factura(ruta_archivo):
+    extension = os.path.splitext(ruta_archivo)[1].lower()
+    # Si es imagen, usar modelo de visión directamente
+    if extension in EXTENSIONES_IMAGEN:
+        resultado = extraer_datos_imagen(ruta_archivo)
+        if resultado:
+            return resultado
+        return {k: "No encontrado" for k in ["Razón Social Emisor","Razón Social Cliente","CIF","Número Factura","Fecha","Base Imponible","IVA","Total"]}
+    # Si es PDF, flujo normal
     texto_crudo = extraer_texto(ruta_archivo)
     if not texto_crudo:
         return {k: "No encontrado" for k in ["Razón Social Emisor","Razón Social Cliente","CIF","Número Factura","Fecha","Base Imponible","IVA","Total"]}

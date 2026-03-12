@@ -1,371 +1,337 @@
-from flask import Flask, request, jsonify, send_file, send_from_directory, session, redirect, url_for
-from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
+import pdfplumber
+import re
+import json
 import os
-import stripe
-stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
-STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
-STRIPE_PK = os.environ.get("STRIPE_PK", "")
-from extractor import extraer_datos_factura, guardar_en_excel
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-from models import db, Usuario, InvitadoIP
-
-app = Flask(__name__, static_folder=".")
-app.secret_key = "factura-ai-clave-secreta-2024"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///usuarios.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-CORS(app)
-db.init_app(app)
-
-UPLOAD_FOLDER = "uploads"
-EXCEL_PATH = "resultados.xlsx"
-LIMITE_GRATIS_INVITADO = 10
-LIMITE_GRATIS_REGISTRADO = 30
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# Crea las tablas al arrancar
-with app.app_context():
-    db.create_all()
-
-@app.route("/landing")
-def landing():
-    return send_from_directory(".", "landing.html")
-
-# ── PÁGINA PRINCIPAL ──────────────────────────────────
-@app.route("/")
-def inicio():
-    if "usuario_id" not in session:
-        return send_from_directory(".", "landing.html")
-    return send_from_directory(".", "index.html")
-
-@app.route("/app")
-def app_principal():
-    return send_from_directory(".", "index.html")
 
 
-# ── REGISTRO ──────────────────────────────────────────
-@app.route("/registro", methods=["GET", "POST"])
-def registro():
-    if request.method == "GET":
-        return send_from_directory(".", "registro.html")
-    datos = request.get_json()
-    email = datos.get("email", "").strip().lower()
-    contraseña = datos.get("contraseña", "")
-    if not email or not contraseña:
-        return jsonify({"error": "Email y contraseña son obligatorios"}), 400
-    if Usuario.query.filter_by(email=email).first():
-        return jsonify({"error": "Este email ya está registrado"}), 400
-    facturas_invitado = session.get("facturas_invitado", 0)
-    nuevo = Usuario(email=email, contraseña=generate_password_hash(contraseña), facturas_usadas=facturas_invitado)
-    db.session.add(nuevo)
-    db.session.commit()
-    session["usuario_id"] = nuevo.id
-    session["usuario_email"] = nuevo.email
-    return jsonify({"ok": True})
+EXTENSIONES_IMAGEN = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff", ".tif"}
 
+def extraer_texto(ruta_archivo):
+    extension = os.path.splitext(ruta_archivo)[1].lower()
+    if extension == ".pdf":
+        texto = ""
+        with pdfplumber.open(ruta_archivo) as pdf:
+            for pagina in pdf.pages:
+                texto += pagina.extract_text() or ""
+        return texto
+    return ""
 
-# ── LOGIN ─────────────────────────────────────────────
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "GET":
-        return send_from_directory(".", "login.html")
-    datos = request.get_json()
-    email = datos.get("email", "").strip().lower()
-    contraseña = datos.get("contraseña", "")
-    usuario = Usuario.query.filter_by(email=email).first()
-    if not usuario or not check_password_hash(usuario.contraseña, contraseña):
-        return jsonify({"error": "Email o contraseña incorrectos"}), 401
-    facturas_invitado = session.get("facturas_invitado", 0)
-    if facturas_invitado > 0:
-        usuario.facturas_usadas = max(usuario.facturas_usadas, facturas_invitado)
-        db.session.commit()
-    session["usuario_id"] = usuario.id
-    session["usuario_email"] = usuario.email
-    return jsonify({"ok": True})
-
-
-# ── LOGOUT ────────────────────────────────────────────
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
-
-
-# ── PROCESAR FACTURAS ─────────────────────────────────
-@app.route("/procesar", methods=["POST"])
-def procesar_facturas():
-    if "usuario_id" not in session:
-        ip = request.remote_addr
-        invitado = InvitadoIP.query.filter_by(ip=ip).first()
-        if not invitado:
-            invitado = InvitadoIP(ip=ip, facturas_usadas=0)
-            db.session.add(invitado)
-            db.session.commit()
-        if invitado.facturas_usadas >= LIMITE_GRATIS_INVITADO:
-            return jsonify({"error": "limite_invitado"}), 403
-    else:
-        usuario = Usuario.query.get(session["usuario_id"])
-        if not usuario.es_premium and usuario.facturas_usadas >= LIMITE_GRATIS_REGISTRADO:
-            return jsonify({"error": "limite_alcanzado"}), 403
-
-    archivos = request.files.getlist("archivos")
-    if not archivos:
-        return jsonify({"error": "No se han enviado archivos"}), 400
-
-    excel_base = None
-    if "excel_base" in request.files:
-        archivo_excel = request.files["excel_base"]
-        if archivo_excel.filename.endswith(".xlsx"):
-            excel_base = os.path.join(UPLOAD_FOLDER, "base_" + archivo_excel.filename)
-            archivo_excel.save(excel_base)
-
-    extensiones_permitidas = {".pdf"}
-    resultados = []
-
-    if os.path.exists(EXCEL_PATH):
-        os.remove(EXCEL_PATH)
-
-    for archivo in archivos:
-        extension = os.path.splitext(archivo.filename)[1].lower()
-        if extension not in extensiones_permitidas:
-            resultados.append({"archivo": archivo.filename, "error": "Formato no permitido"})
-            continue
-        ruta = os.path.join(UPLOAD_FOLDER, archivo.filename)
-        archivo.save(ruta)
-        datos = extraer_datos_factura(ruta)
-        guardar_en_excel(datos, EXCEL_PATH, excel_base)
-
-        if "usuario_id" not in session:
-            invitado.facturas_usadas += 1
-            db.session.commit()
-        else:
-            usuario.facturas_usadas += 1
-            db.session.commit()
-
-        resultados.append({"archivo": archivo.filename, "datos": datos})
-
-    if "usuario_id" not in session:
-        return jsonify({
-            "resultados": resultados,
-            "facturas_usadas": invitado.facturas_usadas,
-            "es_premium": False,
-            "es_invitado": True,
-            "facturas_restantes": max(0, LIMITE_GRATIS_INVITADO - invitado.facturas_usadas)
-        })
-    else:
-        return jsonify({
-            "resultados": resultados,
-            "facturas_usadas": usuario.facturas_usadas,
-            "es_premium": usuario.es_premium,
-            "es_invitado": False,
-            "facturas_restantes": max(0, LIMITE_GRATIS_REGISTRADO - usuario.facturas_usadas) if not usuario.es_premium else "ilimitadas"
-        })
-
-
-# ── DESCARGAR EXCEL ───────────────────────────────────
-@app.route("/descargar", methods=["GET"])
-def descargar_excel():
-    if "usuario_id" not in session:
-        return jsonify({"error": "Debes iniciar sesión"}), 401
-    if os.path.exists(EXCEL_PATH):
-        return send_file(EXCEL_PATH, as_attachment=True)
-    return jsonify({"error": "No hay Excel generado todavía"}), 404
-
-
-# ── ESTADO DEL USUARIO ────────────────────────────────
-@app.route("/estado")
-def estado_usuario():
-    if "usuario_id" not in session:
-        ip = request.remote_addr
-        invitado = InvitadoIP.query.filter_by(ip=ip).first()
-        facturas_usadas = invitado.facturas_usadas if invitado else 0
-        return jsonify({
-            "autenticado": False,
-            "es_invitado": True,
-            "facturas_usadas": facturas_usadas,
-            "facturas_restantes": max(0, LIMITE_GRATIS_INVITADO - facturas_usadas)
-        })
-    usuario = Usuario.query.get(session["usuario_id"])
-    return jsonify({
-        "autenticado": True,
-        "email": usuario.email,
-        "facturas_usadas": usuario.facturas_usadas,
-        "es_premium": usuario.es_premium,
-        "es_invitado": False,
-        "facturas_restantes": max(0, LIMITE_GRATIS_REGISTRADO - usuario.facturas_usadas) if not usuario.es_premium else "ilimitadas"
-    })
-
-
-# ── CREAR SESIÓN DE PAGO ──────────────────────────────
-@app.route("/crear-pago", methods=["POST"])
-def crear_pago():
-    if "usuario_id" not in session:
-        return jsonify({"error": "Debes iniciar sesión"}), 401
-
-    if not stripe.api_key:
-        return jsonify({"error": "Stripe no configurado"}), 500
-
-    usuario = Usuario.query.get(session["usuario_id"])
-
-    # URL dinámica: funciona en local Y en producción automáticamente
-    base_url = request.host_url.rstrip("/")
-
-    checkout = stripe.checkout.Session.create(
-        payment_method_types=["card"],
-        mode="subscription",
-        line_items=[{"price": STRIPE_PRICE_ID, "quantity": 1}],
-        customer_email=usuario.email,
-        success_url=f"{base_url}/pago-exitoso?session_id={{CHECKOUT_SESSION_ID}}",
-        cancel_url=f"{base_url}/",
-    )
-    return jsonify({"url": checkout.url})
-
-
-# ── PAGO EXITOSO ──────────────────────────────────────
-@app.route("/pago-exitoso")
-def pago_exitoso():
-    if "usuario_id" not in session:
-        return redirect("/login")
-    usuario = Usuario.query.get(session["usuario_id"])
-    usuario.es_premium = True
-    db.session.commit()
-    return redirect("/")
-
-
-# ── CLAVE PÚBLICA STRIPE ──────────────────────────────
-@app.route("/stripe-pk")
-def stripe_pk():
-    return jsonify({"pk": STRIPE_PK})
-
-
-# ── CUENTA ────────────────────────────────────────────
-@app.route("/cuenta")
-def cuenta():
-    if "usuario_id" not in session:
-        return redirect("/login")
-    return send_from_directory(".", "cuenta.html")
-
-@app.route("/cuenta-datos")
-def cuenta_datos():
-    if "usuario_id" not in session:
-        return jsonify({"error": "No autenticado"}), 401
-    usuario = Usuario.query.get(session["usuario_id"])
-    return jsonify({
-        "email": usuario.email,
-        "es_premium": usuario.es_premium,
-        "facturas_usadas": usuario.facturas_usadas
-    })
-
-@app.route("/portal-cliente")
-def portal_cliente():
-    if "usuario_id" not in session:
-        return redirect("/login")
-    usuario = Usuario.query.get(session["usuario_id"])
+def extraer_datos_imagen(ruta_archivo):
+    """Usa el modelo de visión de Groq para extraer datos directamente de una imagen."""
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return None
     try:
-        clientes = stripe.Customer.list(email=usuario.email, limit=1)
-        if not clientes.data:
-            return redirect("/cuenta?error=no_cliente")
-        customer_id = clientes.data[0].id
-        base_url = request.headers.get("Origin") or request.host_url.rstrip("/")
-        if "onrender.com" in base_url and base_url.startswith("http://"):
-            base_url = base_url.replace("http://", "https://")
-        portal = stripe.billing_portal.Session.create(
-            customer=customer_id,
-            return_url=f"{base_url}/cuenta"
+        import base64
+        from groq import Groq
+        with open(ruta_archivo, "rb") as f:
+            imagen_b64 = base64.b64encode(f.read()).decode("utf-8")
+        extension = os.path.splitext(ruta_archivo)[1].lower().lstrip(".")
+        media_type_map = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
+                          "webp": "image/webp", "bmp": "image/bmp", "tiff": "image/tiff", "tif": "image/tiff"}
+        media_type = media_type_map.get(extension, "image/jpeg")
+        cliente = Groq(api_key=api_key)
+        prompt = """Eres un experto en contabilidad española. Analiza esta imagen de una factura y extrae exactamente estos 8 campos.
+
+DEFINICIONES:
+- EMISOR = empresa que emite/cobra la factura (aparece en cabecera/membrete)
+- CLIENTE = empresa que recibe/paga (aparece tras etiquetas como "RAZÓN SOCIAL:", "Cliente:", "Facturar a:")
+
+REGLAS:
+- "Base Imponible", "IVA", "Total" = solo número con 2 decimales, sin € ni texto. Ejemplo: 1234.56
+- "Fecha" = formato DD/MM/YYYY
+- Si un campo no existe escribe exactamente: No encontrado
+- Responde ÚNICAMENTE con el JSON, sin texto antes ni después
+
+JSON requerido:
+{"Razón Social Emisor": "...", "Razón Social Cliente": "...", "CIF": "...", "Número Factura": "...", "Fecha": "...", "Base Imponible": "...", "IVA": "...", "Total": "..."}"""
+        respuesta = cliente.chat.completions.create(
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=[{"role": "user", "content": [
+                {"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{imagen_b64}"}},
+                {"type": "text", "text": prompt}
+            ]}],
+            temperature=0,
+            max_tokens=500,
         )
-        return redirect(portal.url)
+        texto_respuesta = respuesta.choices[0].message.content.strip()
+        texto_respuesta = re.sub(r'^```(?:json)?\s*', '', texto_respuesta)
+        texto_respuesta = re.sub(r'\s*```$', '', texto_respuesta)
+        match = re.search(r'\{.*\}', texto_respuesta, re.DOTALL)
+        if match:
+            texto_respuesta = match.group(0)
+        datos = json.loads(texto_respuesta)
+        campos = ["Razón Social Emisor", "Razón Social Cliente", "CIF", "Número Factura", "Fecha", "Base Imponible", "IVA", "Total"]
+        for campo in campos:
+            if campo not in datos:
+                datos[campo] = "No encontrado"
+        for campo in ["Base Imponible", "IVA", "Total"]:
+            valor = str(datos.get(campo, "No encontrado")).strip()
+            if valor and valor != "No encontrado":
+                valor = valor.replace(",", ".").replace("€", "").replace("EUR", "").strip()
+                if re.match(r'^\d+(\.\d{1,2})?$', valor):
+                    datos[campo] = valor + " EUR"
+        return datos
     except Exception as e:
-        return redirect("/cuenta?error=portal")
+        return None
 
-@app.route("/leer-excel", methods=["POST"])
-def leer_excel():
-    if "usuario_id" not in session:
-        return jsonify({"error": "Debes iniciar sesión"}), 401
 
-    if "excel" not in request.files:
-        if os.path.exists(EXCEL_PATH):
-            libro = openpyxl.load_workbook(EXCEL_PATH)
-        else:
-            return jsonify({"filas": [], "cabeceras": []})
+def extraer_con_ia(texto):
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return None
+    try:
+        from groq import Groq
+        cliente = Groq(api_key=api_key)
+        prompt = f"""Eres un experto en contabilidad española. Analiza este texto de una factura y extrae exactamente estos 8 campos.
+
+DEFINICIONES IMPORTANTES:
+- EMISOR = la empresa que HA CREADO y ENVIADO la factura. Es quien COBRA. Normalmente aparece en la cabecera/membrete del documento con su nombre, CIF y dirección. Su dominio de email también puede identificarlo.
+- CLIENTE = la empresa que RECIBE la factura. Es quien PAGA. Aparece tras etiquetas como "RAZÓN SOCIAL:", "Cliente:", "Facturar a:", "A/Att:", "Dirección envío factura:", "COD. CLIENTE", etc.
+
+CASOS ESPECIALES (muy importantes):
+- Si ves "RAZÓN SOCIAL:" seguido de un nombre de empresa, ese nombre ES EL CLIENTE, no el emisor.
+- Si el texto de la cabecera parece ilegible, invertido o con puntos entre letras (ej: ".F.I.C", ".PIRCSNI"), es el membrete del emisor con texto rotado — intenta inferir el nombre del emisor por otros medios (email, pie de página, nombre de archivo).
+- El emisor suele ser quien firma la factura o aparece en el pie de página con datos legales.
+- Fíjate en el dominio del email del comercial para identificar al emisor (ej: si el email es nombre@alpesa.com, el emisor podría ser ALPESA).
+
+REGLAS:
+- "Razón Social Emisor" = nombre de quien emite/cobra
+- "Razón Social Cliente" = nombre de quien recibe/paga
+- "CIF" = NIF/CIF del EMISOR únicamente
+- "Base Imponible", "IVA", "Total" = solo número con 2 decimales, sin € ni texto. Ejemplo: 1234.56
+- "Fecha" = formato DD/MM/YYYY
+- Si un campo no existe escribe exactamente: No encontrado
+- Responde ÚNICAMENTE con el JSON, sin texto antes ni después, sin bloques de código
+
+JSON requerido:
+{{"Razón Social Emisor": "...", "Razón Social Cliente": "...", "CIF": "...", "Número Factura": "...", "Fecha": "...", "Base Imponible": "...", "IVA": "...", "Total": "..."}}
+
+TEXTO DE LA FACTURA:
+{texto[:4000]}"""
+
+        respuesta = cliente.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+        )
+        texto_respuesta = respuesta.choices[0].message.content.strip()
+        texto_respuesta = re.sub(r'^```(?:json)?\s*', '', texto_respuesta)
+        texto_respuesta = re.sub(r'\s*```$', '', texto_respuesta)
+        match = re.search(r'\{.*\}', texto_respuesta, re.DOTALL)
+        if match:
+            texto_respuesta = match.group(0)
+        datos = json.loads(texto_respuesta)
+        campos = ["Razón Social Emisor", "Razón Social Cliente", "CIF", "Número Factura", "Fecha", "Base Imponible", "IVA", "Total"]
+        for campo in campos:
+            if campo not in datos:
+                datos[campo] = "No encontrado"
+        for campo in ["Base Imponible", "IVA", "Total"]:
+            valor = str(datos.get(campo, "No encontrado")).strip()
+            if valor and valor != "No encontrado":
+                valor = valor.replace(",", ".").replace("€", "").replace("EUR", "").strip()
+                if re.match(r'^\d+(\.\d{1,2})?$', valor):
+                    datos[campo] = valor + " EUR"
+                else:
+                    datos[campo] = valor
+        return datos
+    except Exception:
+        return None
+
+
+def extraer_con_regex(texto_crudo):
+    datos = {k: "No encontrado" for k in
+             ["Razón Social Emisor", "Razón Social Cliente", "CIF", "Número Factura", "Fecha", "Base Imponible", "IVA", "Total"]}
+
+    lineas = [l.strip() for l in texto_crudo.strip().split("\n") if l.strip()]
+    texto = " ".join(lineas)
+    sep_cliente = r'(?:\n[Ff]actura[:\s]+[A-Z0-9][A-Z0-9\-\/]{2,25}\n|FACTURAR?\s+A\b|FACTURADO\s+A\b)'
+    partes = re.split(sep_cliente, texto_crudo, maxsplit=1, flags=re.IGNORECASE)
+    texto_emisor = partes[0] if len(partes) > 1 else texto_crudo
+    texto_cliente = partes[1] if len(partes) > 1 else ""
+    lineas_emisor = [l.strip() for l in texto_emisor.split("\n") if l.strip()]
+
+    razon_encontrada = False
+    SUFIJO = r'(?:S\.?[ \t]?L\.?[ \t]?U?\.?|S\.?[ \t]?A\.?[ \t]?U?\.?|S\.?[ \t]?C\.?|S\.?[ \t]?L\.?[ \t]?P\.|,[ \t]?S\.?[ \t]?[LA]\.?)'
+
+    m = re.search(r'DATOS\s+DEL\s+EMISOR[:\s\n]*([^\n]+)', texto_crudo, re.IGNORECASE)
+    if m:
+        datos["Razón Social Emisor"] = m.group(1).strip()[:60]
+        razon_encontrada = True
+
+    if not razon_encontrada:
+        patron_2 = r'([A-ZÁÉÍÓÚÑ][A-Za-záéíóúñÁÉÍÓÚÑ \t&\.,]{2,40}' + SUFIJO + r')[^\n]{0,40}(?:CIF|NIF)'
+        for tb in [texto_emisor, texto_crudo]:
+            m = re.search(patron_2, tb, re.IGNORECASE)
+            if m:
+                break
+        if m:
+            valor = m.group(1).strip().rstrip(".,; \t")
+            if len(valor) > 3:
+                datos["Razón Social Emisor"] = valor[:60]
+                razon_encontrada = True
+
+    if not razon_encontrada:
+        m = re.search(r'([A-ZÁÉÍÓÚÑ][A-Za-záéíóúñÁÉÍÓÚÑ\s&\.,]{2,50}' + SUFIJO + r')', texto_emisor, re.IGNORECASE)
+        if m:
+            valor = m.group(1).strip()
+            m2 = re.search(SUFIJO, valor, re.IGNORECASE)
+            if m2: valor = valor[:m2.end()].strip()
+            if len(valor) > 3:
+                datos["Razón Social Emisor"] = valor[:60]
+                razon_encontrada = True
+
+    if not razon_encontrada:
+        ruido = [r'^\d+$', r'^factura$', r'^(?:CIF|NIF|DNI)', r'^AÑO', r'^MES\b', r'^DÍA', r'^DOC', r'^ref\.']
+        for linea in lineas_emisor[:10]:
+            if not any(re.search(p, linea, re.IGNORECASE) for p in ruido) and len(linea) > 4 and re.search(r'[A-Za-záéíóúñ]{3}', linea):
+                datos["Razón Social Emisor"] = linea[:60]
+                break
+
+    # Extraer cliente
+    if texto_cliente:
+        lineas_cli = [l.strip() for l in texto_cliente.split("\n") if l.strip()]
+        ruido = [r'^\d+$', r'^factura$', r'^(?:CIF|NIF|DNI)', r'^AÑO', r'^MES\b', r'^FECHA', r'^TOTAL', r'^BASE']
+        for linea in lineas_cli[:8]:
+            if not any(re.search(p, linea, re.IGNORECASE) for p in ruido) and len(linea) > 4 and re.search(r'[A-Za-záéíóúñ]{3}', linea):
+                datos["Razón Social Cliente"] = linea[:60]
+                break
+
+    patrones_cif = [
+        r'(?:CIF|NIF|N\.I\.F|C\.I\.F|DNI)[:\s\.\-]*([A-Za-z]-?\d{7}-?[A-Za-z0-9])',
+        r'(?:CIF|NIF|N\.I\.F|C\.I\.F|DNI)[:\s\.\-]*([0-9]{8}[A-Za-z])',
+        r'\b([A-HJ-NP-SUVW]-?\d{7}-?[0-9A-J])\b',
+        r'\b([0-9]{8}[A-Za-z])\b',
+        r'\b([XYZ]-?\d{7}[A-Za-z])\b',
+    ]
+    for patron in patrones_cif[:2]:
+        m = re.search(patron, texto_emisor, re.IGNORECASE)
+        if m: datos["CIF"] = m.group(1).upper(); break
+    if datos["CIF"] == "No encontrado":
+        for patron in patrones_cif:
+            m = re.search(patron, texto_crudo[-600:], re.IGNORECASE)
+            if m: datos["CIF"] = m.group(1).upper(); break
+    if datos["CIF"] == "No encontrado":
+        for patron in patrones_cif:
+            m = re.search(patron, texto, re.IGNORECASE)
+            if m: datos["CIF"] = m.group(1).upper(); break
+
+    for patron in [
+        r'N[º°][:\s]+([A-Z0-9][A-Z0-9\-\/]{3,25})\b',
+        r'(?:factura\s*n[uú]m(?:ero)?\.?|n[uú]m(?:ero)?\s*(?:de\s*)?factura)[:\s\.\-#]*([A-Z0-9][A-Z0-9\-\/]{2,20})',
+        r'[Ff]actura\s+([A-Z][0-9]{4}[A-Z0-9\-\/]{1,15})\b',
+        r'\b([A-Z]{1,4}[\/\-]\d{4}[\/\-][A-Z]{2,4}[\/\-]\d{4})\b',
+        r'\b([A-Z]{1,4}[\/\-]\d{4}[\/\-]\d{2}[\/\-]\d{2,6})\b',
+        r'\b(?:FAC|FRA|INV|F)[\/\-](\d{2,6}(?:[\/\-]\d{2,4})?)\b',
+        r'[Ff]actura[:\s]*([0-9]{4}[\/\-][0-9]{2,6})',
+        r'[Ff]-(\d{2,4}-?\d{2,6})',
+        r'[Nn][uú]m(?:ero)?\.?\s*[:\s]*(\d{3,8})',
+    ]:
+        m = re.search(patron, texto, re.IGNORECASE)
+        if m: datos["Número Factura"] = m.group(1).strip(); break
+
+    for patron in [
+        r'(?:fecha\s*(?:de\s*)?(?:factura|emisi[oó]n)?)[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})',
+        r'\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})\b',
+        r'\b(\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+\d{4})\b',
+    ]:
+        m = re.search(patron, texto, re.IGNORECASE)
+        if m: datos["Fecha"] = m.group(1).strip(); break
+
+    NUM = r'([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{1,2})?)\s*(?:€|EUR)?'
+    for patron in [r'[Bb]ase\s*imponible\s*total[:\s]*'+NUM, r'[Bb]ase\s*[Ii]mponible[:\s]*'+NUM, r'[Ii]mporte\s+base[:\s]*'+NUM, r'[Ss]ubtotal\s*(?:sin\s*impuestos|sin\s*IVA)?[:\s]*'+NUM, r'[Nn]eto[:\s]*'+NUM]:
+        m = re.search(patron, texto, re.IGNORECASE)
+        if m: datos["Base Imponible"] = limpiar_numero(m.group(1)) + " EUR"; break
+
+    for patron in [r'IVA\s*\(\s*(?:21|10|4)\s*%[^)]*\)[:\s]*'+NUM, r'IVA\s*(?:21|10|4)\s*%[:\s]*'+NUM, r'[Cc]uota\s*IVA[:\s]*'+NUM, r'\bIVA[:\s]+'+NUM]:
+        m = re.search(patron, texto, re.IGNORECASE)
+        if m: datos["IVA"] = limpiar_numero(m.group(1)) + " EUR"; break
+
+    for patron in [r'\bTOTAL\s*A\s*PAGAR\s*(?:\(EUR\))?[:\s]*'+NUM, r'\bTOTAL\s*FACTURA[:\s]*'+NUM, r'\bTOTAL\s*EUR[:\s]*'+NUM, r'\bTOTAL[^a-zA-Z0-9]{0,5}'+NUM, r'[Ii]mporte\s*(?:total|a\s*pagar)[^0-9]{0,20}'+NUM]:
+        m = re.search(patron, texto, re.IGNORECASE)
+        if m: datos["Total"] = limpiar_numero(m.group(1)) + " EUR"; break
+
+    if datos["IVA"] == "No encontrado" and datos["Base Imponible"] != "No encontrado" and datos["Total"] != "No encontrado":
+        try:
+            base = float(datos["Base Imponible"].replace(" EUR","").replace(",","."))
+            total = float(datos["Total"].replace(" EUR","").replace(",","."))
+            iva = round(total - base, 2)
+            if 0 < iva < total: datos["IVA"] = str(iva) + " EUR"
+        except Exception:
+            pass
+
+    return datos
+
+
+def extraer_datos_factura(ruta_archivo):
+    extension = os.path.splitext(ruta_archivo)[1].lower()
+    # Si es imagen, usar modelo de visión directamente
+    if extension in EXTENSIONES_IMAGEN:
+        resultado = extraer_datos_imagen(ruta_archivo)
+        if resultado:
+            return resultado
+        return {k: "No encontrado" for k in ["Razón Social Emisor","Razón Social Cliente","CIF","Número Factura","Fecha","Base Imponible","IVA","Total"]}
+    # Si es PDF, flujo normal
+    texto_crudo = extraer_texto(ruta_archivo)
+    if not texto_crudo:
+        return {k: "No encontrado" for k in ["Razón Social Emisor","Razón Social Cliente","CIF","Número Factura","Fecha","Base Imponible","IVA","Total"]}
+    resultado_ia = extraer_con_ia(texto_crudo)
+    if resultado_ia:
+        return resultado_ia
+    return extraer_con_regex(texto_crudo)
+
+
+def limpiar_numero(texto):
+    texto = texto.strip()
+    if re.match(r'^\d{1,3}(\.\d{3})+(,\d{1,2})?$', texto):
+        texto = texto.replace(".", "").replace(",", ".")
+    elif re.match(r'^\d+(,\d{1,2})$', texto):
+        texto = texto.replace(",", ".")
+    elif re.match(r'^\d{1,3}(\.\d{3})+$', texto):
+        texto = texto.replace(".", "")
+    return texto
+
+
+def guardar_en_excel(datos, ruta_excel="resultados.xlsx", excel_base=None):
+    verde_oscuro    = PatternFill("solid", fgColor="1A3C34")
+    verde_claro     = PatternFill("solid", fgColor="D6EAE4")
+    blanco          = PatternFill("solid", fgColor="FFFFFF")
+    fuente_cabecera = Font(name="Calibri", bold=True, color="FFFFFF", size=11)
+    fuente_normal   = Font(name="Calibri", size=10)
+    borde_lado      = Side(style="thin", color="B0C4BE")
+    borde           = Border(left=borde_lado, right=borde_lado, top=borde_lado, bottom=borde_lado)
+    cabeceras       = ["Razón Social", "CIF", "Número Factura", "Fecha", "Base Imponible", "IVA", "Total"]
+
+    if excel_base and os.path.exists(excel_base):
+        libro = openpyxl.load_workbook(excel_base); hoja = libro.active; es_nuevo = False
+    elif os.path.exists(ruta_excel):
+        libro = openpyxl.load_workbook(ruta_excel); hoja = libro.active; es_nuevo = False
     else:
-        archivo = request.files["excel"]
-        ruta = os.path.join(UPLOAD_FOLDER, "editor_" + archivo.filename)
-        archivo.save(ruta)
-        libro = openpyxl.load_workbook(ruta)
+        libro = openpyxl.Workbook(); hoja = libro.active; hoja.title = "Facturas"; es_nuevo = True
 
-    hoja = libro.active
-    filas = []
-    for row in hoja.iter_rows(values_only=True):
-        filas.append(list(row))
+    if es_nuevo:
+        for col, titulo in enumerate(cabeceras, start=1):
+            celda = hoja.cell(row=1, column=col, value=titulo)
+            celda.font = fuente_cabecera; celda.fill = verde_oscuro
+            celda.alignment = Alignment(horizontal="center", vertical="center"); celda.border = borde
+        hoja.row_dimensions[1].height = 22
 
-    cabeceras = filas[0] if filas else []
-    datos = filas[1:] if len(filas) > 1 else []
+    fila = hoja.max_row + 1
+    # Usar Razón Social Emisor por defecto en el Excel
+    razon_social = datos.get("Razón Social", datos.get("Razón Social Emisor", "No encontrado"))
+    valores = [razon_social, datos["CIF"], datos["Número Factura"],
+               datos["Fecha"], datos["Base Imponible"], datos["IVA"], datos["Total"]]
+    relleno = verde_claro if fila % 2 == 0 else blanco
 
-    return jsonify({"cabeceras": cabeceras, "filas": datos})
+    for col, valor in enumerate(valores, start=1):
+        celda = hoja.cell(row=fila, column=col, value=valor)
+        celda.font = fuente_normal; celda.fill = relleno
+        celda.alignment = Alignment(horizontal="center", vertical="center"); celda.border = borde
 
-
-@app.route("/guardar-excel", methods=["POST"])
-def guardar_excel():
-    if "usuario_id" not in session:
-        return jsonify({"error": "Debes iniciar sesión"}), 401
-
-    datos = request.get_json()
-    cabeceras = datos.get("cabeceras", [])
-    filas = datos.get("filas", [])
-
-    libro = openpyxl.Workbook()
-    hoja = libro.active
-    hoja.title = "Facturas"
-
-    verde_oscuro = PatternFill("solid", fgColor="1A3C34")
-    verde_claro  = PatternFill("solid", fgColor="D6EAE4")
-    blanco       = PatternFill("solid", fgColor="FFFFFF")
-    fuente_cab   = Font(name="Calibri", bold=True, color="FFFFFF", size=11)
-    fuente_normal = Font(name="Calibri", size=10)
-    borde_lado = Side(style="thin", color="B0C4BE")
-    borde = Border(left=borde_lado, right=borde_lado, top=borde_lado, bottom=borde_lado)
-
-    for col, titulo in enumerate(cabeceras, start=1):
-        celda = hoja.cell(row=1, column=col, value=titulo)
-        celda.font = fuente_cab
-        celda.fill = verde_oscuro
-        celda.alignment = Alignment(horizontal="center", vertical="center")
-        celda.border = borde
-    hoja.row_dimensions[1].height = 22
-
-    for i, fila in enumerate(filas, start=2):
-        relleno = verde_claro if i % 2 == 0 else blanco
-        for col, valor in enumerate(fila, start=1):
-            celda = hoja.cell(row=i, column=col, value=valor)
-            celda.font = fuente_normal
-            celda.fill = relleno
-            celda.alignment = Alignment(horizontal="center", vertical="center")
-            celda.border = borde
-        hoja.row_dimensions[i].height = 18
-
-    for col in range(1, len(cabeceras) + 1):
+    hoja.row_dimensions[fila].height = 18
+    for col in range(1, 8):
         hoja.column_dimensions[get_column_letter(col)].width = 22
-
-    ruta_nueva = os.path.join(UPLOAD_FOLDER, "editado.xlsx")
-    libro.save(ruta_nueva)
-    return send_file(ruta_nueva, as_attachment=True, download_name="facturas_editadas.xlsx")
-
-@app.route("/test-ocr", methods=["POST"])
-def test_ocr():
-    archivo = request.files.get("archivo")
-    if not archivo:
-        return jsonify({"error": "No hay archivo"})
-    ruta = os.path.join(UPLOAD_FOLDER, archivo.filename)
-    archivo.save(ruta)
-    from extractor import extraer_texto
-    texto = extraer_texto(ruta)
-    return jsonify({"texto": texto})
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    libro.save(ruta_excel)

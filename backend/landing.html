@@ -2,384 +2,95 @@
 <html lang="es">
 <head>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <meta name="description" content="Extrae datos de facturas PDF automáticamente con IA. Exporta a Excel en segundos. Gratis hasta 10 facturas.">
-<meta name="keywords" content="extractor facturas, facturas PDF a Excel, automatizar facturas, IA facturas">
+  <meta name="description" content="Extrae datos de facturas PDF e imágenes automáticamente con IA. Exporta a Excel en segundos. Gratis hasta 10 facturas.">
+  <meta name="keywords" content="extractor facturas, facturas PDF a Excel, automatizar facturas, IA facturas, facturas imagen JPG PNG">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FacturaAI — Extrae datos de facturas en segundos</title>
   <style>
-    :root {
-      --bg: #080f1a;
-      --surface: #0f1e2e;
-      --card: #142030;
-      --border: #1e3448;
-      --green: #34d399;
-      --green-dim: #1a6e50;
-      --text: #e2eaf4;
-      --muted: #64849e;
-      --accent: #38bdf8;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(52,211,153,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(52,211,153,0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    body::after {
-      content: '';
-      position: fixed;
-      top: -200px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 800px;
-      height: 800px;
-      background: radial-gradient(circle, rgba(52,211,153,0.08) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 60px;
-      background: rgba(8,15,26,0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .nav-logo { font-size: 22px; font-weight: 800; color: var(--text); }
-    .nav-logo span { color: var(--green); }
-
-    .nav-links { display: flex; gap: 12px; align-items: center; }
-
-    .btn-secondary {
-      padding: 9px 20px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 500;
-      text-decoration: none;
-      transition: all 0.2s;
-      background: transparent;
-      cursor: pointer;
-    }
-    .btn-secondary:hover { border-color: var(--green); color: var(--green); }
-
-    .btn-primary {
-      padding: 9px 22px;
-      background: var(--green);
-      border: none;
-      border-radius: 8px;
-      color: #080f1a;
-      font-size: 14px;
-      font-weight: 700;
-      text-decoration: none;
-      transition: all 0.2s;
-      cursor: pointer;
-    }
-    .btn-primary:hover { background: #10b981; transform: translateY(-1px); }
-
-    .hero {
-      position: relative;
-      z-index: 1;
-      padding: 180px 60px 100px;
-      max-width: 1100px;
-      margin: 0 auto;
-      text-align: center;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(52,211,153,0.1);
-      border: 1px solid rgba(52,211,153,0.25);
-      border-radius: 99px;
-      padding: 6px 16px;
-      font-size: 13px;
-      color: var(--green);
-      margin-bottom: 32px;
-      animation: fadeUp 0.6s ease both;
-    }
-
-    .badge-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.4); }
-    }
-
-    h1 {
-      font-size: clamp(42px, 6vw, 76px);
-      font-weight: 800;
-      line-height: 1.05;
-      letter-spacing: -2px;
-      margin-bottom: 24px;
-      animation: fadeUp 0.6s 0.1s ease both;
-    }
-    h1 em { font-style: normal; color: var(--green); }
-
-    .hero-sub {
-      font-size: 18px;
-      color: var(--muted);
-      line-height: 1.7;
-      max-width: 560px;
-      margin: 0 auto 48px;
-      font-weight: 300;
-      animation: fadeUp 0.6s 0.2s ease both;
-    }
-
-    .hero-ctas {
-      display: flex;
-      gap: 14px;
-      justify-content: center;
-      flex-wrap: wrap;
-      animation: fadeUp 0.6s 0.3s ease both;
-    }
-
-    .btn-hero {
-      padding: 15px 32px;
-      background: var(--green);
-      border: none;
-      border-radius: 10px;
-      color: #080f1a;
-      font-size: 16px;
-      font-weight: 700;
-      text-decoration: none;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-hero:hover { background: #10b981; transform: translateY(-2px); box-shadow: 0 12px 30px rgba(52,211,153,0.3); }
-
-    .btn-hero-outline {
-      padding: 15px 32px;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--muted);
-      font-size: 16px;
-      font-weight: 500;
-      text-decoration: none;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-hero-outline:hover { border-color: var(--muted); color: var(--text); }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .demo-wrap {
-      position: relative;
-      z-index: 1;
-      max-width: 900px;
-      margin: 0 auto 120px;
-      padding: 0 60px;
-      animation: fadeUp 0.6s 0.4s ease both;
-    }
-
-    .demo-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
-    }
-
-    .demo-bar {
-      background: var(--surface);
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .demo-dot { width: 10px; height: 10px; border-radius: 50%; }
-
-    .demo-content {
-      padding: 32px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-
-    .demo-left {
-      background: var(--surface);
-      border: 1px dashed var(--border);
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 20px;
-      gap: 12px;
-    }
-    .demo-left .icon { font-size: 36px; }
-    .demo-left p { color: var(--muted); font-size: 13px; text-align: center; }
-
-    .demo-right { display: flex; flex-direction: column; gap: 10px; }
-
-    .demo-field {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .demo-field .label { color: var(--muted); font-size: 12px; }
-    .demo-field .value { font-size: 13px; font-weight: 600; color: var(--green); }
-
-    .stats {
-      position: relative;
-      z-index: 1;
-      max-width: 900px;
-      margin: 0 auto 120px;
-      padding: 0 60px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-    }
-
-    .stat {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 36px;
-      text-align: center;
-    }
-    .stat:first-child { border-radius: 12px 0 0 12px; }
-    .stat:last-child { border-radius: 0 12px 12px 0; }
-    .stat-num { font-size: 48px; font-weight: 800; color: var(--green); line-height: 1; margin-bottom: 8px; }
-    .stat-label { color: var(--muted); font-size: 14px; }
-
-    .section {
-      position: relative;
-      z-index: 1;
-      max-width: 1100px;
-      margin: 0 auto 120px;
-      padding: 0 60px;
-    }
-
-    .section-label { font-size: 12px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--green); margin-bottom: 16px; }
-    .section-title { font-size: clamp(28px, 4vw, 44px); font-weight: 800; letter-spacing: -1px; margin-bottom: 60px; max-width: 500px; }
-
-    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-
-    .feature-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 28px;
-      transition: all 0.3s;
-    }
-    .feature-card:hover { border-color: var(--green-dim); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-    .feature-icon { font-size: 28px; margin-bottom: 16px; }
-    .feature-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
-    .feature-desc { color: var(--muted); font-size: 14px; line-height: 1.7; }
-
-    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 700px; }
-
-    .price-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px;
-      transition: all 0.3s;
-    }
-    .price-card.featured { border-color: var(--green); position: relative; overflow: hidden; }
-    .price-card.featured::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--green); }
-
-    .price-badge { display: inline-block; background: rgba(52,211,153,0.15); color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; margin-bottom: 20px; }
-    .price-name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-    .price-amount { font-size: 42px; font-weight: 800; color: var(--green); line-height: 1; margin-bottom: 6px; }
-    .price-amount span { font-size: 16px; color: var(--muted); font-weight: 400; }
-    .price-desc { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
-    .price-features { list-style: none; margin-bottom: 28px; }
-    .price-features li { color: var(--muted); font-size: 14px; padding: 6px 0; display: flex; align-items: center; gap: 8px; }
-    .price-features li::before { content: '✓'; color: var(--green); font-weight: 700; }
-
-    .btn-plan { display: block; width: 100%; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 700; text-align: center; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; }
-    .btn-plan-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
-    .btn-plan-outline:hover { border-color: var(--green); color: var(--green); }
-    .btn-plan-green { background: var(--green); color: #080f1a; }
-    .btn-plan-green:hover { background: #10b981; }
-
-    .cta-section {
-      position: relative;
-      z-index: 1;
-      margin: 0 60px 80px;
-      background: linear-gradient(135deg, rgba(52,211,153,0.12), rgba(56,189,248,0.06));
-      border: 1px solid rgba(52,211,153,0.2);
-      border-radius: 24px;
-      padding: 80px 60px;
-      text-align: center;
-      overflow: hidden;
-    }
-    .cta-section::before { content: ''; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(52,211,153,0.1), transparent 60%); pointer-events: none; }
-    .cta-title { font-size: clamp(28px, 4vw, 48px); font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; }
-    .cta-sub { color: var(--muted); font-size: 16px; margin-bottom: 36px; }
-
-    footer {
-      position: relative;
-      z-index: 1;
-      border-top: 1px solid var(--border);
-      padding: 32px 60px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: var(--muted);
-      font-size: 13px;
-    }
-    .footer-logo { font-weight: 800; color: var(--text); font-size: 16px; }
-    .footer-logo span { color: var(--green); }
-
-    @media (max-width: 768px) {
-      nav { padding: 16px 24px; }
-      .hero { padding: 140px 24px 80px; }
-      h1 { letter-spacing: -1px; }
-      .demo-wrap, .stats, .section { padding: 0 24px; }
-      .demo-content { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: 1fr; }
-      .stat:first-child { border-radius: 12px 12px 0 0; }
-      .stat:last-child { border-radius: 0 0 12px 12px; }
-      .features-grid { grid-template-columns: 1fr; }
-      .pricing-grid { grid-template-columns: 1fr; }
-      .cta-section { margin: 0 24px 80px; padding: 60px 32px; }
-      footer { flex-direction: column; gap: 12px; text-align: center; padding: 24px; }
+    :root { --bg:#080f1a; --surface:#0f1e2e; --card:#142030; --border:#1e3448; --green:#34d399; --green-dim:#1a6e50; --text:#e2eaf4; --muted:#64849e; --accent:#38bdf8; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+    body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(52,211,153,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(52,211,153,0.03) 1px,transparent 1px); background-size:60px 60px; pointer-events:none; z-index:0; }
+    body::after { content:''; position:fixed; top:-200px; left:50%; transform:translateX(-50%); width:800px; height:800px; background:radial-gradient(circle,rgba(52,211,153,0.08) 0%,transparent 70%); pointer-events:none; z-index:0; }
+    nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:20px 60px; background:rgba(8,15,26,0.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); }
+    .nav-logo { font-size:22px; font-weight:800; color:var(--text); }
+    .nav-logo span { color:var(--green); }
+    .nav-links { display:flex; gap:12px; align-items:center; }
+    .btn-secondary { padding:9px 20px; border:1px solid var(--border); border-radius:8px; color:var(--muted); font-size:14px; font-weight:500; text-decoration:none; transition:all 0.2s; background:transparent; }
+    .btn-secondary:hover { border-color:var(--green); color:var(--green); }
+    .btn-primary { padding:9px 22px; background:var(--green); border:none; border-radius:8px; color:#080f1a; font-size:14px; font-weight:700; text-decoration:none; transition:all 0.2s; }
+    .btn-primary:hover { background:#10b981; transform:translateY(-1px); }
+    .hero { position:relative; z-index:1; padding:180px 60px 100px; max-width:1100px; margin:0 auto; text-align:center; }
+    .badge { display:inline-flex; align-items:center; gap:8px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.25); border-radius:99px; padding:6px 16px; font-size:13px; color:var(--green); margin-bottom:32px; animation:fadeUp 0.6s ease both; }
+    .badge-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
+    h1 { font-size:clamp(42px,6vw,76px); font-weight:800; line-height:1.05; letter-spacing:-2px; margin-bottom:24px; animation:fadeUp 0.6s 0.1s ease both; }
+    h1 em { font-style:normal; color:var(--green); }
+    .hero-sub { font-size:18px; color:var(--muted); line-height:1.7; max-width:580px; margin:0 auto 48px; font-weight:300; animation:fadeUp 0.6s 0.2s ease both; }
+    .hero-ctas { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; animation:fadeUp 0.6s 0.3s ease both; }
+    .btn-hero { padding:15px 32px; background:var(--green); border:none; border-radius:10px; color:#080f1a; font-size:16px; font-weight:700; text-decoration:none; transition:all 0.2s; display:inline-flex; align-items:center; gap:8px; }
+    .btn-hero:hover { background:#10b981; transform:translateY(-2px); box-shadow:0 12px 30px rgba(52,211,153,0.3); }
+    .btn-hero-outline { padding:15px 32px; background:transparent; border:1px solid var(--border); border-radius:10px; color:var(--muted); font-size:16px; font-weight:500; text-decoration:none; transition:all 0.2s; display:inline-flex; align-items:center; gap:8px; }
+    .btn-hero-outline:hover { border-color:var(--muted); color:var(--text); }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .demo-wrap { position:relative; z-index:1; max-width:900px; margin:0 auto 120px; padding:0 60px; animation:fadeUp 0.6s 0.4s ease both; }
+    .demo-card { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow:0 40px 80px rgba(0,0,0,0.5); }
+    .demo-bar { background:var(--surface); padding:12px 20px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--border); }
+    .demo-dot { width:10px; height:10px; border-radius:50%; }
+    .demo-content { padding:32px; display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+    .demo-left { background:var(--surface); border:1px dashed var(--border); border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; gap:12px; }
+    .demo-left .icon { font-size:36px; }
+    .demo-left p { color:var(--muted); font-size:13px; text-align:center; }
+    .demo-right { display:flex; flex-direction:column; gap:10px; }
+    .demo-field { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; }
+    .demo-field .label { color:var(--muted); font-size:12px; }
+    .demo-field .value { font-size:13px; font-weight:600; color:var(--green); }
+    .stats { position:relative; z-index:1; max-width:900px; margin:0 auto 120px; padding:0 60px; display:grid; gap:2px; }
+    .stat { background:var(--card); border:1px solid var(--border); padding:36px; text-align:center; }
+    .stat:first-child { border-radius:12px 0 0 12px; }
+    .stat:last-child { border-radius:0 12px 12px 0; }
+    .stat-num { font-size:48px; font-weight:800; color:var(--green); line-height:1; margin-bottom:8px; }
+    .stat-label { color:var(--muted); font-size:14px; }
+    .section { position:relative; z-index:1; max-width:1100px; margin:0 auto 120px; padding:0 60px; }
+    .section-label { font-size:12px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--green); margin-bottom:16px; }
+    .section-title { font-size:clamp(28px,4vw,44px); font-weight:800; letter-spacing:-1px; margin-bottom:60px; max-width:500px; }
+    .features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    .feature-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:28px; transition:all 0.3s; }
+    .feature-card:hover { border-color:var(--green-dim); transform:translateY(-4px); box-shadow:0 20px 40px rgba(0,0,0,0.3); }
+    .feature-icon { font-size:28px; margin-bottom:16px; }
+    .feature-title { font-size:17px; font-weight:700; margin-bottom:10px; }
+    .feature-desc { color:var(--muted); font-size:14px; line-height:1.7; }
+    .pricing-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; max-width:700px; }
+    .price-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px; transition:all 0.3s; }
+    .price-card.featured { border-color:var(--green); position:relative; overflow:hidden; }
+    .price-card.featured::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--green); }
+    .price-badge { display:inline-block; background:rgba(52,211,153,0.15); color:var(--green); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; border-radius:4px; margin-bottom:20px; }
+    .price-name { font-size:20px; font-weight:700; margin-bottom:8px; }
+    .price-amount { font-size:42px; font-weight:800; color:var(--green); line-height:1; margin-bottom:6px; }
+    .price-amount span { font-size:16px; color:var(--muted); font-weight:400; }
+    .price-desc { color:var(--muted); font-size:13px; margin-bottom:24px; }
+    .price-features { list-style:none; margin-bottom:28px; }
+    .price-features li { color:var(--muted); font-size:14px; padding:6px 0; display:flex; align-items:center; gap:8px; }
+    .price-features li::before { content:'✓'; color:var(--green); font-weight:700; }
+    .btn-plan { display:block; width:100%; padding:12px; border-radius:8px; font-size:14px; font-weight:700; text-align:center; text-decoration:none; transition:all 0.2s; cursor:pointer; border:none; }
+    .btn-plan-outline { background:transparent; border:1px solid var(--border); color:var(--muted); }
+    .btn-plan-outline:hover { border-color:var(--green); color:var(--green); }
+    .btn-plan-green { background:var(--green); color:#080f1a; }
+    .btn-plan-green:hover { background:#10b981; }
+    .cta-section { position:relative; z-index:1; margin:0 60px 80px; background:linear-gradient(135deg,rgba(52,211,153,0.12),rgba(56,189,248,0.06)); border:1px solid rgba(52,211,153,0.2); border-radius:24px; padding:80px 60px; text-align:center; overflow:hidden; }
+    .cta-section::before { content:''; position:absolute; top:-100px; right:-100px; width:400px; height:400px; background:radial-gradient(circle,rgba(52,211,153,0.1),transparent 60%); pointer-events:none; }
+    .cta-title { font-size:clamp(28px,4vw,48px); font-weight:800; letter-spacing:-1px; margin-bottom:16px; }
+    .cta-sub { color:var(--muted); font-size:16px; margin-bottom:36px; }
+    footer { position:relative; z-index:1; border-top:1px solid var(--border); padding:32px 60px; display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:13px; }
+    .footer-logo { font-weight:800; color:var(--text); font-size:16px; }
+    .footer-logo span { color:var(--green); }
+    @media(max-width:768px){
+      nav{padding:16px 24px} .hero{padding:140px 24px 80px} h1{letter-spacing:-1px}
+      .demo-wrap,.stats,.section{padding:0 24px} .demo-content{grid-template-columns:1fr}
+      .stats{grid-template-columns:1fr !important} .stat:first-child{border-radius:12px 12px 0 0} .stat:last-child{border-radius:0 0 12px 12px}
+      .features-grid{grid-template-columns:1fr} .pricing-grid{grid-template-columns:1fr}
+      .cta-section{margin:0 24px 80px;padding:60px 32px} footer{flex-direction:column;gap:12px;text-align:center;padding:24px}
     }
   </style>
 </head>
@@ -394,15 +105,12 @@
   </nav>
 
   <section class="hero">
-    <div class="badge">
-      <div class="badge-dot"></div>
-      Extracción automática de facturas
-    </div>
-    <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.3); border-radius:99px; padding:6px 16px; font-size:13px; color:#fbbf24; margin-bottom:16px;">
+    <div class="badge"><div class="badge-dot"></div>Extracción automática de facturas</div>
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:99px;padding:6px 16px;font-size:13px;color:#fbbf24;margin-bottom:16px;">
       ⚠ Versión Beta · Estamos en desarrollo, puede haber errores
     </div>
     <h1>Extrae datos de<br>facturas en <em>segundos</em></h1>
-    <p class="hero-sub">Sube tus PDFs y obtén Razón Social, CIF, Fecha, Base Imponible, IVA y Total en un Excel listo para usar. Sin esfuerzo manual.</p>
+    <p class="hero-sub">Sube tus PDFs o fotos de facturas (JPG, PNG) y obtén Razón Social, CIF, Fecha, Base Imponible, IVA y Total en un Excel listo para usar. Sin esfuerzo manual.</p>
     <div class="hero-ctas">
       <a href="/registro" class="btn-hero">🚀 Empezar gratis</a>
       <a href="/app" class="btn-hero-outline">→ Probar como invitado</a>
@@ -415,12 +123,12 @@
         <div class="demo-dot" style="background:#f87171"></div>
         <div class="demo-dot" style="background:#fbbf24"></div>
         <div class="demo-dot" style="background:#34d399"></div>
-        <span style="color:var(--muted); font-size:12px; margin-left:12px;">factura-ejemplo.pdf → Excel</span>
+        <span style="color:var(--muted);font-size:12px;margin-left:12px;">factura.pdf / foto.jpg → Excel</span>
       </div>
       <div class="demo-content">
         <div class="demo-left">
           <div class="icon">📄</div>
-          <p>factura-ejemplo.pdf<br><span style="color:var(--green); font-size:11px;">✓ Procesado</span></p>
+          <p>factura-ejemplo.pdf<br><span style="color:var(--green);font-size:11px;">✓ Procesado</span></p>
         </div>
         <div class="demo-right">
           <div class="demo-field"><span class="label">Razón Social</span><span class="value">TechSoluciones S.L.</span></div>
@@ -434,7 +142,7 @@
     </div>
   </div>
 
-  <div class="stats" style="grid-template-columns: repeat(4, 1fr);">
+  <div class="stats" style="grid-template-columns:repeat(4,1fr);">
     <div class="stat"><div class="stat-num" id="contadorFacturas">847</div><div class="stat-label">facturas procesadas</div></div>
     <div class="stat"><div class="stat-num">7</div><div class="stat-label">campos extraídos por factura</div></div>
     <div class="stat"><div class="stat-num">&lt;5s</div><div class="stat-label">tiempo de procesado</div></div>
@@ -445,7 +153,7 @@
     <div class="section-label">Funcionalidades</div>
     <h2 class="section-title">Todo lo que necesitas</h2>
     <div class="features-grid">
-      <div class="feature-card"><div class="feature-icon">🤖</div><div class="feature-title">Extracción inteligente</div><div class="feature-desc">Reconoce cualquier estructura de factura, incluso las más complejas con varias páginas, columnas y formatos raros.</div></div>
+      <div class="feature-card"><div class="feature-icon">🤖</div><div class="feature-title">Extracción inteligente</div><div class="feature-desc">Reconoce cualquier estructura de factura en PDF o imagen (JPG, PNG, WEBP). Incluso fotos tomadas con el móvil.</div></div>
       <div class="feature-card"><div class="feature-icon">📊</div><div class="feature-title">Export a Excel</div><div class="feature-desc">Genera automáticamente un Excel profesional con todos los datos organizados y formateados listos para tu contabilidad.</div></div>
       <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">Procesado múltiple</div><div class="feature-desc">Sube varias facturas a la vez y obtenlas todas en un único Excel. Ahorra horas de trabajo manual.</div></div>
       <div class="feature-card"><div class="feature-icon">✏️</div><div class="feature-title">Editor integrado</div><div class="feature-desc">Edita los datos directamente en la web antes de descargar. Corrige errores, añade filas o columnas sin abrir Excel.</div></div>
@@ -494,10 +202,7 @@
       <div class="feature-card">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
           <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#34d399,#059669);display:flex;align-items:center;justify-content:center;font-weight:800;color:#0f172a;font-size:16px;">M</div>
-          <div>
-            <div style="font-weight:700;font-size:14px;">María G.</div>
-            <div style="color:var(--muted);font-size:12px;">Gestora administrativa · Granada</div>
-          </div>
+          <div><div style="font-weight:700;font-size:14px;">María G.</div><div style="color:var(--muted);font-size:12px;">Gestora administrativa · Granada</div></div>
           <div style="margin-left:auto;color:#fbbf24;font-size:14px;">★★★★★</div>
         </div>
         <div class="feature-desc">"Antes tardaba más de una hora en introducir las facturas del mes a mano. Ahora lo hago en minutos. Una herramienta increíble para cualquier gestoría."</div>
@@ -505,10 +210,7 @@
       <div class="feature-card">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
           <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#0284c7);display:flex;align-items:center;justify-content:center;font-weight:800;color:#0f172a;font-size:16px;">C</div>
-          <div>
-            <div style="font-weight:700;font-size:14px;">Carlos M.</div>
-            <div style="color:var(--muted);font-size:12px;">Autónomo · Madrid</div>
-          </div>
+          <div><div style="font-weight:700;font-size:14px;">Carlos M.</div><div style="color:var(--muted);font-size:12px;">Autónomo · Madrid</div></div>
           <div style="margin-left:auto;color:#fbbf24;font-size:14px;">★★★★★</div>
         </div>
         <div class="feature-desc">"Soy autónomo con muchos proveedores y esto me ha cambiado la vida. Subo 30 facturas de golpe y en segundos tengo el Excel listo para mi asesor."</div>
@@ -516,10 +218,7 @@
       <div class="feature-card">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
           <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-weight:800;color:#0f172a;font-size:16px;">L</div>
-          <div>
-            <div style="font-weight:700;font-size:14px;">Laura P.</div>
-            <div style="color:var(--muted);font-size:12px;">Directora financiera · Sevilla</div>
-          </div>
+          <div><div style="font-weight:700;font-size:14px;">Laura P.</div><div style="color:var(--muted);font-size:12px;">Directora financiera · Sevilla</div></div>
           <div style="margin-left:auto;color:#fbbf24;font-size:14px;">★★★★☆</div>
         </div>
         <div class="feature-desc">"Todavía está en Beta y alguna factura con formato raro falla, pero el equipo responde rápido y la herramienta mejora cada semana. Muy recomendable."</div>
@@ -536,13 +235,13 @@
         <div class="feature-icon">✉️</div>
         <div class="feature-title">Escríbenos</div>
         <div class="feature-desc" style="margin-bottom:16px;">Respondemos en menos de 24 horas. Para dudas, sugerencias o reportar errores.</div>
-        <a href="mailto:javiercabado@gmail.com" style="display:inline-block;background:var(--green);color:#080f1a;font-weight:700;font-size:13px;padding:10px 20px;border-radius:8px;text-decoration:none;">javiercabado@gmail.com</a>
+        <a href="mailto:javiercabado@gmail.com" style="display:inline-block;background:var(--green);color:#080f1a;font-weight:700;font-size:13px;padding:10px 20px;border-radius:8px;text-decoration:none;">✉ Enviar correo</a>
       </div>
       <div class="feature-card" style="text-align:center;">
         <div class="feature-icon">🐛</div>
         <div class="feature-title">Reportar un error</div>
         <div class="feature-desc" style="margin-bottom:16px;">¿La IA ha extraído mal un dato? Mándanos la factura y lo corregimos en la siguiente versión.</div>
-        <a href="mailto:javiercabado@gmail.com?subject=Error%20en%20extracción" style="display:inline-block;background:transparent;color:var(--green);font-weight:700;font-size:13px;padding:10px 20px;border-radius:8px;text-decoration:none;border:1px solid var(--green);">Reportar error</a>
+        <a href="mailto:javiercabado@gmail.com?subject=Error%20en%20extraccion" style="display:inline-block;background:transparent;color:var(--green);font-weight:700;font-size:13px;padding:10px 20px;border-radius:8px;text-decoration:none;border:1px solid var(--green);">Reportar error</a>
       </div>
     </div>
   </section>
@@ -550,7 +249,7 @@
   <div class="cta-section">
     <h2 class="cta-title">Empieza a ahorrar tiempo hoy</h2>
     <p class="cta-sub">Sin tarjeta de crédito. Sin instalaciones. Funciona desde el navegador.</p>
-    <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
       <a href="/registro" class="btn-hero">🚀 Crear cuenta gratis</a>
       <a href="/" class="btn-hero-outline">→ Probar como invitado</a>
     </div>
@@ -562,24 +261,18 @@
   </footer>
 
   <script>
-    // Contador animado
     function animarContador(el, inicio, fin, duracion) {
       let startTime = null;
-      function step(timestamp) {
-        if (!startTime) startTime = timestamp;
-        const progress = Math.min((timestamp - startTime) / duracion, 1);
-        el.textContent = Math.floor(progress * (fin - inicio) + inicio).toLocaleString('es-ES');
-        if (progress < 1) requestAnimationFrame(step);
+      function step(ts) {
+        if (!startTime) startTime = ts;
+        const p = Math.min((ts - startTime) / duracion, 1);
+        el.textContent = Math.floor(p * (fin - inicio) + inicio).toLocaleString('es-ES');
+        if (p < 1) requestAnimationFrame(step);
       }
       requestAnimationFrame(step);
     }
     const observer = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          animarContador(document.getElementById('contadorFacturas'), 0, 847, 1800);
-          observer.disconnect();
-        }
-      });
+      entries.forEach(e => { if (e.isIntersecting) { animarContador(document.getElementById('contadorFacturas'), 0, 847, 1800); observer.disconnect(); } });
     });
     const el = document.getElementById('contadorFacturas');
     if (el) observer.observe(el);
